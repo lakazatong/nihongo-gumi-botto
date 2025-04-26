@@ -1,0 +1,11 @@
+{
+    "name": "nihongo-gumi-botto",
+    "version": "1.0.0",
+    "description": "Helps you learn kanjis!",
+    "main": "index.js",
+    "dependencies": {
+        "discord.js": "14.19.1",
+        "sqlite3": "5.1.7",
+        "dotenv": "16.5.0"
+    }
+}

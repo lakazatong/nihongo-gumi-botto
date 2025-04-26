@@ -1,0 +1,4 @@
+node_modules
+kanjis.db
+package-lock.json
+.env
