@@ -4,6 +4,7 @@ const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, Partials, 
 const sqlite3 = require('sqlite3').verbose();
 const axios = require('axios');
 const fs = require('fs');
+const { saveCardsToJson } = require('./parser.js');
 require('dotenv').config();
 
 const client = new Client({
@@ -54,7 +55,8 @@ const db = new sqlite3.Database('./kanjis.db', (err) => {
                 reading TEXT NOT NULL,
                 meanings TEXT NOT NULL,
                 sentence TEXT,
-                score INTEGER DEFAULT 0
+                score INTEGER DEFAULT 0,
+                UNIQUE (user_id, kanji)
             )
         `);
     }
@@ -163,8 +165,8 @@ client.on('interactionCreate', async (interaction) => {
                     setTimeout(async () => {
                         await interaction.editReply({
                             content: row.sentence
-                            ? `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.sentence}`
-                            : `${row.kanji}\n${row.reading}\n${row.meanings}`,
+                                ? `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.sentence}`
+                                : `${row.kanji}\n${row.reading}\n${row.meanings}`,
                             components: []
                         });
                     }, 30000);
@@ -205,13 +207,11 @@ client.on('interactionCreate', async (interaction) => {
             }
 
             const fileUrl = attachment.url;
-            const fileName = attachment.name;
-
-            const path = `./${fileName}`;
+            const filename = attachment.name;
 
             try {
                 const response = await axios.get(fileUrl, { responseType: 'stream' });
-                const writer = fs.createWriteStream(path);
+                const writer = fs.createWriteStream(filename);
                 response.data.pipe(writer);
 
                 await new Promise((resolve, reject) => {
@@ -219,10 +219,10 @@ client.on('interactionCreate', async (interaction) => {
                     writer.on('error', reject);
                 });
 
-                const fileContent = fs.readFileSync(path, 'utf-8');
-                const kanjiList = JSON.parse(fileContent);
+                const cardsPath = saveCardsToJson(filename);
+                const fileContent = fs.readFileSync(cardsPath, 'utf-8');
 
-                kanjiList.forEach(({ kanji, reading, meanings, sentence }) => {
+                JSON.parse(fileContent).forEach(({ kanji, reading, meanings, sentence }) => {
                     const formattedMeanings = Object.entries(meanings)
                         .map(([category, values]) => `${category}: ${values.join(', ')}`)
                         .join('\n');
@@ -230,19 +230,24 @@ client.on('interactionCreate', async (interaction) => {
                     db.run(
                         'INSERT INTO kanjis (user_id, kanji, reading, meanings, sentence) VALUES (?, ?, ?, ?, ?)',
                         [interaction.user.id, kanji, reading, formattedMeanings, sentence || null],
-                        (err) => {
+                        async (err) => {
                             if (err) console.error('Error inserting kanji:', err.message);
                         }
                     );
                 });
 
-                fs.unlinkSync(path);
+                await Promise.all([
+                    fs.unlink(cardsPath, (err) => { }),
+                    fs.unlink(filename, (err) => { })
+                ]);
+
                 await interaction.reply({
-                    content: `File ${fileName} loaded successfully!`,
+                    content: `File ${filename} loaded successfully!`,
                     flags: MessageFlags.Ephemeral
                 });
             } catch (error) {
                 console.error('Error processing the file:', error.message);
+
                 await interaction.reply({
                     content: 'An error occurred while processing the file.',
                     flags: MessageFlags.Ephemeral

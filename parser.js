@@ -90,16 +90,15 @@ function parseAnkiExport(path) {
     return parsedCards;
 }
 
-function saveCardsToJson(filename) {
-    const cards = parseAnkiExport(`${filename}.txt`);
-
-    fs.writeFile(`${filename}.json`, JSON.stringify(cards, null, 4), (err) => {
+function saveCardsToJson(file) {
+    const filename = `${file.split('.')[0]}.json`;
+    fs.writeFileSync(filename, JSON.stringify(parseAnkiExport(file), null, 1), (err) => {
         if (err) throw err;
-        console.log(`${filename}.json has been saved!`);
+        console.log(`${filename} has been saved!`);
     });
+    return filename;
 }
 
-saveCardsToJson('anki');
-saveCardsToJson('Yomitan');
-
-// parseAnkiExport('Yomitan.txt');
+module.exports = {
+    saveCardsToJson
+};
