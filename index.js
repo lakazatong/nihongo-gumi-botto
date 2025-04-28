@@ -1,3 +1,5 @@
+'use strict';
+
 const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, Partials, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const sqlite3 = require('sqlite3').verbose();
 require('dotenv').config();
@@ -100,12 +102,12 @@ client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
 });
 
-const correctButton = new ButtonBuilder()
+const getCorrectButton = () => new ButtonBuilder()
     .setCustomId('correct')
     .setLabel('✅')
     .setStyle(ButtonStyle.Success);
 
-const incorrectButton = new ButtonBuilder()
+const getIncorrectButton = () => new ButtonBuilder()
     .setCustomId('incorrect')
     .setLabel('❌')
     .setStyle(ButtonStyle.Danger);
@@ -131,8 +133,8 @@ client.on('interactionCreate', async (interaction) => {
                     }
                     const buttons = new ActionRowBuilder()
                         .addComponents(
-                            correctButton.setCustomId(`correct_${row.id}`),
-                            incorrectButton.setCustomId(`incorrect_${row.id}`)
+                            getCorrectButton().setCustomId(`correct_${row.id}`),
+                            getIncorrectButton().setCustomId(`incorrect_${row.id}`)
                         );
 
                     const message = await interaction.reply({
@@ -190,12 +192,11 @@ client.on('interactionCreate', async (interaction) => {
                                 console.error(err);
                                 return;
                             }
+                            const button = new ActionRowBuilder()
+                            .addComponents(getCorrectButton().setDisabled(true))
                             await interaction.update({
                                 content: `${row.kanji}\n${row.kana}\n${row.description}`,
-                                components: [
-                                    new ActionRowBuilder()
-                                    .addComponents(correctButton.setDisabled(true))
-                                ]
+                                components: [button]
                             });
                         }
                     );
@@ -216,12 +217,11 @@ client.on('interactionCreate', async (interaction) => {
                                 console.error(err);
                                 return;
                             }
+                            const button = new ActionRowBuilder()
+                            .addComponents(getIncorrectButton().setDisabled(true));
                             await interaction.update({
                                 content: `${row.kanji}\n${row.kana}\n${row.description}`,
-                                components: [
-                                    new ActionRowBuilder()
-                                    .addComponents(incorrectButton.setDisabled(true))
-                                ]
+                                components: [button]
                             });
                         }
                     );
