@@ -51,7 +51,7 @@ function parseAnkiExport(path) {
 
         const categories = Array.from(new Set(Array.from(back.querySelectorAll('span[data-sc-code]'))));
         const meanings = {};
-        const seenMeanings = new Set();
+        const seenMeanings = new Map();
 
         for (const category of categories) {
             const categoryText = category.textContent.trim();
@@ -60,10 +60,16 @@ function parseAnkiExport(path) {
 
             const meaningString = JSON.stringify(meaningArray);
 
-            if (!seenMeanings.has(meaningString)) {
-                meanings[categoryText] = meaningArray;
-                seenMeanings.add(meaningString);
+            if (seenMeanings.has(meaningString)) {
+                seenMeanings.get(meaningString).push(categoryText);
+            } else {
+                seenMeanings.set(meaningString, [categoryText]);
             }
+        }
+
+        for (const [meaningString, categoryList] of seenMeanings.entries()) {
+            const joinedCategories = categoryList.join(', ');
+            meanings[joinedCategories] = JSON.parse(meaningString);
         }
 
         const sentenceDiv = front.querySelector('div[class="frontbg"] > div:nth-child(3)');
