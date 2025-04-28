@@ -2,6 +2,8 @@
 
 const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, Partials, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const sqlite3 = require('sqlite3').verbose();
+const axios = require('axios');
+const fs = require('fs');
 require('dotenv').config();
 
 const client = new Client({
@@ -49,8 +51,9 @@ const db = new sqlite3.Database('./kanjis.db', (err) => {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT NOT NULL,
                 kanji TEXT NOT NULL,
-                kana TEXT NOT NULL,
-                description TEXT NOT NULL,
+                reading TEXT NOT NULL,
+                meanings TEXT NOT NULL,
+                sentence TEXT,
                 score INTEGER DEFAULT 0
             )
         `);
@@ -72,12 +75,23 @@ const commands = [
                 .setDescription('The kanjis representation')
                 .setRequired(true))
         .addStringOption(option =>
-            option.setName('kana')
-                .setDescription('The kana writing')
+            option.setName('reading')
+                .setDescription('The reading writing')
                 .setRequired(true))
         .addStringOption(option =>
-            option.setName('description')
-                .setDescription('The description')
+            option.setName('meanings')
+                .setDescription('The meanings')
+                .setRequired(true))
+        .addStringOption(option =>
+            option.setName('sentence')
+                .setDescription('The sentence it was found in if any')
+                .setRequired(false)),
+    new SlashCommandBuilder()
+        .setName('load')
+        .setDescription('Loads your anki\'s exported kanjis.')
+        .addAttachmentOption(option =>
+            option.setName('file')
+                .setDescription('The file to load')
                 .setRequired(true))
 ].map(command => command.toJSON());
 
@@ -118,7 +132,9 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.isCommand()) {
         const { commandName } = interaction;
 
-        if (commandName === 'ask') {
+        if (commandName === 'ping') {
+            await interaction.reply('Pong!');
+        } else if (commandName === 'ask') {
             db.get(
                 'SELECT * FROM kanjis WHERE user_id = ? ORDER BY RANDOM() LIMIT 1', [interaction.user.id],
                 async (err, row) => {
@@ -138,26 +154,31 @@ client.on('interactionCreate', async (interaction) => {
                         );
 
                     const message = await interaction.reply({
-                        content: `${row.kanji}\n||${row.kana}||\n||${row.description}||`,
+                        content: row.sentence
+                            ? `${row.kanji}\n||${row.reading}||\n||${row.meanings}||\n||${row.sentence}||`
+                            : `${row.kanji}\n||${row.reading}||\n||${row.meanings}||`,
                         components: [buttons]
                     });
 
                     setTimeout(async () => {
                         await interaction.editReply({
-                            content: `${row.kanji}\n${row.kana}\n${row.description}`,
+                            content: row.sentence
+                            ? `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.sentence}`
+                            : `${row.kanji}\n${row.reading}\n${row.meanings}`,
                             components: []
                         });
                     }, 30000);
                 }
             );
         } else if (commandName === 'save') {
-            const kanji = interaction.options.getString('kanji');
-            const kana = interaction.options.getString('kana');
-            const description = interaction.options.getString('description');
             const userId = interaction.user.id;
+            const kanji = interaction.options.getString('kanji');
+            const reading = interaction.options.getString('reading');
+            const meanings = interaction.options.getString('meanings');
+            const sentence = interaction.options.getString('sentence') || null;
 
             db.run(
-                'INSERT INTO kanjis (kanji, kana, description, user_id) VALUES (?, ?, ?, ?)', [kanji, kana, description, userId],
+                'INSERT INTO kanjis (user_id, kanji, reading, meanings, sentence) VALUES (?, ?, ?, ?, ?)', [userId, kanji, reading, meanings, sentence],
                 async (err) => {
                     if (err) {
                         console.error(err);
@@ -173,13 +194,67 @@ client.on('interactionCreate', async (interaction) => {
                     });
                 }
             );
+        } else if (commandName === 'load') {
+            const attachment = interaction.options.getAttachment('file');
+            if (!attachment) {
+                await interaction.reply({
+                    content: 'No file provided.',
+                    flags: MessageFlags.Ephemeral
+                });
+                return;
+            }
+
+            const fileUrl = attachment.url;
+            const fileName = attachment.name;
+
+            const path = `./${fileName}`;
+
+            try {
+                const response = await axios.get(fileUrl, { responseType: 'stream' });
+                const writer = fs.createWriteStream(path);
+                response.data.pipe(writer);
+
+                await new Promise((resolve, reject) => {
+                    writer.on('finish', resolve);
+                    writer.on('error', reject);
+                });
+
+                const fileContent = fs.readFileSync(path, 'utf-8');
+                const kanjiList = JSON.parse(fileContent);
+
+                kanjiList.forEach(({ kanji, reading, meanings, sentence }) => {
+                    const formattedMeanings = Object.entries(meanings)
+                        .map(([category, values]) => `${category}: ${values.join(', ')}`)
+                        .join('\n');
+
+                    db.run(
+                        'INSERT INTO kanjis (user_id, kanji, reading, meanings, sentence) VALUES (?, ?, ?, ?, ?)',
+                        [interaction.user.id, kanji, reading, formattedMeanings, sentence || null],
+                        (err) => {
+                            if (err) console.error('Error inserting kanji:', err.message);
+                        }
+                    );
+                });
+
+                fs.unlinkSync(path);
+                await interaction.reply({
+                    content: `File ${fileName} loaded successfully!`,
+                    flags: MessageFlags.Ephemeral
+                });
+            } catch (error) {
+                console.error('Error processing the file:', error.message);
+                await interaction.reply({
+                    content: 'An error occurred while processing the file.',
+                    flags: MessageFlags.Ephemeral
+                });
+            }
         }
     } else if (interaction.isButton()) {
         const [action, id] = interaction.customId.split('_');
-        
+
         if (action === 'correct') {
             db.get(
-                'SELECT kanji, kana, description, score FROM kanjis WHERE id = ?', [id],
+                'SELECT * FROM kanjis WHERE id = ?', [id],
                 (err, row) => {
                     if (err) {
                         console.error(err);
@@ -193,9 +268,9 @@ client.on('interactionCreate', async (interaction) => {
                                 return;
                             }
                             const button = new ActionRowBuilder()
-                            .addComponents(getCorrectButton().setDisabled(true))
+                                .addComponents(getCorrectButton().setDisabled(true))
                             await interaction.update({
-                                content: `${row.kanji}\n${row.kana}\n${row.description}`,
+                                content: `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.sentence}`,
                                 components: [button]
                             });
                         }
@@ -204,7 +279,7 @@ client.on('interactionCreate', async (interaction) => {
             );
         } else if (action === 'incorrect') {
             db.get(
-                'SELECT kanji, kana, description, score FROM kanjis WHERE id = ?', [id],
+                'SELECT * FROM kanjis WHERE id = ?', [id],
                 (err, row) => {
                     if (err) {
                         console.error(err);
@@ -218,9 +293,9 @@ client.on('interactionCreate', async (interaction) => {
                                 return;
                             }
                             const button = new ActionRowBuilder()
-                            .addComponents(getIncorrectButton().setDisabled(true));
+                                .addComponents(getIncorrectButton().setDisabled(true));
                             await interaction.update({
-                                content: `${row.kanji}\n${row.kana}\n${row.description}`,
+                                content: `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.sentence}`,
                                 components: [button]
                             });
                         }
