@@ -29,4 +29,5 @@ async function callback(interaction) {
 
 module.exports = {
 	callback,
+	getIncorrectButton,
 };

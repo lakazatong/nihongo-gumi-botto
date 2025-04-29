@@ -4,8 +4,10 @@ const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, Partials }
 
 require("dotenv").config();
 
+// long requires
 require("./database/kanjis.js");
 require("./database/aliases.js");
+require("./utils/anki_parser.js");
 
 const client = new Client({
 	intents: [
@@ -72,8 +74,8 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 		});
 
 		console.log("Slash commands online.");
-	} catch (error) {
-		console.error(error);
+	} catch (err) {
+		console.error(err);
 	}
 })();
 

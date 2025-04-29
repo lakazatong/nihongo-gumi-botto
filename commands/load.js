@@ -1,8 +1,9 @@
 "use strict";
 
+const { MessageFlags } = require("discord.js");
 const fs = require("fs");
 const axios = require("axios");
-const { saveCardsToJson } = require("./parser.js");
+const { saveCardsToJson } = require("../utils/anki_parser.js");
 const { kanjis_db } = require("../database/kanjis.js");
 const { getOrDefaultAlias } = require("../database/aliases.js");
 
@@ -16,12 +17,16 @@ async function callback(interaction) {
 		return;
 	}
 
+	await interaction.reply({
+		content: "Processing your file...",
+		flags: MessageFlags.Ephemeral,
+	});
+
 	getOrDefaultAlias(interaction.user.id, interaction.user.username, async (err, alias) => {
 		if (err) {
 			console.error(err);
-			interaction.reply({
+			await interaction.editReply({
 				content: "An error occurred while fetching the alias.",
-				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
@@ -42,6 +47,12 @@ async function callback(interaction) {
 			});
 
 			const cardsPath = saveCardsToJson(filename);
+			if (!cardsPath) {
+				await interaction.editReply({
+					content: "An error occurred while parsing the file.",
+				});
+				return;
+			}
 			const fileContent = fs.readFileSync(cardsPath, "utf-8");
 
 			JSON.parse(fileContent).forEach(({ kanji, reading, meanings, sentence }) => {
@@ -53,23 +64,27 @@ async function callback(interaction) {
 					"INSERT INTO kanjis (alias, kanji, reading, meanings, sentence) VALUES (?, ?, ?, ?, ?)",
 					[alias, kanji, reading, formattedMeanings, sentence || null],
 					async (err) => {
-						if (err) console.error("Error inserting kanji:", err.message);
+						if (err) console.error(err);
 					}
 				);
 			});
 
-			await Promise.all([fs.unlink(cardsPath, (err) => {}), fs.unlink(filename, (err) => {})]);
+			await Promise.all([
+				fs.unlink(cardsPath, (err) => {
+					console.error(err);
+				}),
+				fs.unlink(filename, (err) => {
+					console.error(err);
+				}),
+			]);
 
-			await interaction.reply({
+			await interaction.editReply({
 				content: `File ${filename} loaded successfully!`,
-				flags: MessageFlags.Ephemeral,
 			});
 		} catch (err) {
-			console.error("Error processing the file:", err.message);
-
-			await interaction.reply({
-				content: "An error occurred while processing the file.",
-				flags: MessageFlags.Ephemeral,
+			console.error(err);
+			await interaction.editReply({
+				content: "An error occurred while getting the file.",
 			});
 		}
 	});

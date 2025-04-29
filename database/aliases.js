@@ -16,27 +16,25 @@ const aliases_db = new sqlite3.Database("./database/aliases.db", (err) => {
 	}
 });
 
-function getOrDefaultAlias(userId, defaultAlias) {
-	return new Promise((resolve, reject) => {
-		aliases_db.get(`SELECT alias FROM aliases WHERE user_id = ?`, [userId], (err, row) => {
-			if (err) {
-				reject(err);
-			} else if (row) {
-				resolve(row.alias);
-			} else {
-				aliases_db.run(
-					`INSERT INTO aliases (user_id, alias) VALUES (?, ?)`,
-					[userId, defaultAlias],
-					function (err) {
-						if (err) {
-							reject(err);
-						} else {
-							resolve(defaultAlias);
-						}
+function getOrDefaultAlias(userId, defaultAlias, callback) {
+	aliases_db.get(`SELECT alias FROM aliases WHERE user_id = ?`, [userId], (err, row) => {
+		if (err) {
+			callback(err);
+		} else if (row) {
+			callback(null, row.alias);
+		} else {
+			aliases_db.run(
+				`INSERT INTO aliases (user_id, alias) VALUES (?, ?)`,
+				[userId, defaultAlias],
+				function (err) {
+					if (err) {
+						callback(err);
+					} else {
+						callback(null, defaultAlias);
 					}
-				);
-			}
-		});
+				}
+			);
+		}
 	});
 }
 

@@ -2,7 +2,7 @@
 
 const fs = require("fs");
 const { JSDOM } = require("jsdom");
-const beautify = require("js-beautify").html;
+// const beautify = require("js-beautify").html;
 
 function extractReading(htmlContent) {
 	let reading = "";
@@ -87,11 +87,13 @@ function parseAnkiExport(path) {
 
 function saveCardsToJson(file) {
 	const filename = `${file.split(".")[0]}.json`;
-	fs.writeFileSync(filename, JSON.stringify(parseAnkiExport(file), null, 1), (err) => {
-		if (err) throw err;
-		console.log(`${filename} has been saved!`);
-	});
-	return filename;
+	try {
+		fs.writeFileSync(filename, JSON.stringify(parseAnkiExport(file), null, 1));
+		return filename;
+	} catch (err) {
+		console.log(err);
+		return null;
+	}
 }
 
 module.exports = {

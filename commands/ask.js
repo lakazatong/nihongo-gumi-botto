@@ -1,7 +1,10 @@
 "use strict";
 
+const { ActionRowBuilder, MessageFlags } = require("discord.js");
 const { kanjis_db } = require("../database/kanjis.js");
 const { getOrDefaultAlias } = require("../database/aliases.js");
+const { getCorrectButton } = require("../buttons/correct.js");
+const { getIncorrectButton } = require("../buttons/incorrect.js");
 
 async function callback(interaction) {
 	getOrDefaultAlias(interaction.user.id, interaction.user.username, (err, alias) => {
@@ -17,7 +20,6 @@ async function callback(interaction) {
 		kanjis_db.get("SELECT * FROM kanjis WHERE alias = ? ORDER BY RANDOM() LIMIT 1", [alias], async (err, row) => {
 			if (err) {
 				console.error(err);
-				await interaction.reply("An error occurred while fetching data.");
 				return;
 			}
 			if (!row) {

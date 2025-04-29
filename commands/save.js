@@ -1,5 +1,6 @@
 "use strict";
 
+const { MessageFlags } = require("discord.js");
 const { kanjis_db } = require("../database/kanjis.js");
 const { getOrDefaultAlias } = require("../database/aliases.js");
 
