@@ -2,7 +2,7 @@
 
 const sqlite3 = require("sqlite3").verbose();
 
-const kanjis_db = new sqlite3.Database("kanjis.db", (err) => {
+const kanjis_db = new sqlite3.Database("./database/kanjis.db", (err) => {
 	if (err) {
 		console.error("Error opening kanjis.db:", err.message);
 	} else {

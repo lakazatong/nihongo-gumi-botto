@@ -2,7 +2,7 @@
 
 const sqlite3 = require("sqlite3").verbose();
 
-const aliases_db = new sqlite3.Database("aliases.db", (err) => {
+const aliases_db = new sqlite3.Database("./database/aliases.db", (err) => {
 	if (err) {
 		console.error("Error opening aliases.db:", err.message);
 	} else {

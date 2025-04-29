@@ -1,5 +1,5 @@
 node_modules
-kanjis.db
+*.db
 package-lock.json
 .env
 *.json
