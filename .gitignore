@@ -7,3 +7,5 @@ package-lock.json
 *.gz
 *.html
 *.xml
+.prettierrc.cjs
+eslint.config.mjs
