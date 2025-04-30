@@ -6,7 +6,7 @@ require("dotenv").config();
 
 // long requires
 require("./database/kanjis.js");
-require("./database/aliases.js");
+require("./database/decks.js");
 require("./utils/anki_parser.js");
 
 const client = new Client({
@@ -45,32 +45,53 @@ const client = new Client({
 	],
 });
 
-const commands = [
-	new SlashCommandBuilder().setName("ping").setDescription("Replies with Pong!"),
-	new SlashCommandBuilder().setName("ask").setDescription("Fetches a random kanji from the database."),
-	new SlashCommandBuilder()
-		.setName("save")
-		.setDescription("Saves a new kanji to the database.")
-		.addStringOption((option) =>
-			option.setName("kanji").setDescription("The kanjis representation").setRequired(true)
-		)
-		.addStringOption((option) => option.setName("reading").setDescription("The reading writing").setRequired(true))
-		.addStringOption((option) => option.setName("meanings").setDescription("The meanings").setRequired(true))
-		.addStringOption((option) =>
-			option.setName("sentence").setDescription("The sentence it was found in if any").setRequired(false)
-		),
-	new SlashCommandBuilder()
-		.setName("load")
-		.setDescription("Loads your anki's exported kanjis.")
-		.addAttachmentOption((option) => option.setName("file").setDescription("The file to load").setRequired(true)),
-].map((command) => command.toJSON());
-
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 
 (async () => {
 	try {
 		await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
-			body: commands,
+			body: [
+				new SlashCommandBuilder().setName("ping").setDescription("Replies with Pong!"),
+				new SlashCommandBuilder()
+					.setName("ask")
+					.setDescription("Quizzes you with a random card from the deck.")
+					.addStringOption((option) =>
+						option.setName("deck").setDescription("The deck name").setRequired(false)
+					),
+				new SlashCommandBuilder()
+					.setName("save")
+					.setDescription("Saves a new card to the deck.")
+					.addStringOption((option) =>
+						option.setName("kanji").setDescription("The kanjis writing").setRequired(true)
+					)
+					.addStringOption((option) =>
+						option.setName("reading").setDescription("The kana writing").setRequired(true)
+					)
+					.addStringOption((option) =>
+						option.setName("meanings").setDescription("The meanings").setRequired(true)
+					)
+					.addStringOption((option) =>
+						option.setName("sentence").setDescription("The sentence it was found in").setRequired(false)
+					)
+					.addStringOption((option) =>
+						option.setName("deck").setDescription("The deck name").setRequired(false)
+					),
+				new SlashCommandBuilder()
+					.setName("load")
+					.setDescription("Loads your anki's exported file in the deck.")
+					.addAttachmentOption((option) =>
+						option.setName("file").setDescription("The file to load").setRequired(true)
+					)
+					.addStringOption((option) =>
+						option.setName("deck").setDescription("The deck name").setRequired(false)
+					),
+				new SlashCommandBuilder()
+					.setName("default")
+					.setDescription("Changes your default deck.")
+					.addStringOption((option) =>
+						option.setName("deck").setDescription("The default deck name").setRequired(true)
+					),
+			].map((command) => command.toJSON()),
 		});
 
 		console.log("Slash commands online.");

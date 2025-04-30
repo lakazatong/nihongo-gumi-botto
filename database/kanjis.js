@@ -9,13 +9,13 @@ const kanjis_db = new sqlite3.Database("./database/kanjis.db", (err) => {
 		kanjis_db.run(`
             CREATE TABLE IF NOT EXISTS kanjis (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                alias TEXT NOT NULL,
+                deck TEXT NOT NULL,
                 kanji TEXT NOT NULL,
                 reading TEXT NOT NULL,
                 meanings TEXT NOT NULL,
                 sentence TEXT,
                 score INTEGER DEFAULT 0,
-                UNIQUE (alias, kanji)
+                UNIQUE (deck, kanji)
             )
         `);
 	}
