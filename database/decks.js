@@ -43,7 +43,7 @@ function isOwner(userId, deck, callback) {
 	});
 }
 
-function updateDeck(userId, deck) {
+function updateDefault(userId, deck) {
 	decks_db.run(`UPDATE defaults SET deck = ? WHERE user_id = ?`, [deck, userId], function (err) {
 		if (err) {
 			return;
@@ -79,6 +79,6 @@ module.exports = {
 	decks_db,
 	exists,
 	isOwner,
-	updateDeck,
+	updateDeck: updateDefault,
 	getDeck,
 };
