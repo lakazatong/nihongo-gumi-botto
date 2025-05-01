@@ -7,9 +7,13 @@ const { getIncorrectButton } = require("../buttons/incorrect.js");
 
 const sessions = new Map();
 
+function getKey(id, deck) {
+	return `${id}_${deck}`;
+}
+
 function startSession(deck, interval, user, resume) {
-	sessions.set(
-		user.id,
+	sessions.set(getKey(user.id, deck), [
+		interval,
 		setInterval(() => {
 			db.db.get(`SELECT * FROM owners WHERE deck = ?`, [deck], (err, row) => {
 				if (err) {
@@ -77,8 +81,8 @@ function startSession(deck, interval, user, resume) {
 					});
 				});
 			});
-		}, interval * 60000)
-	);
+		}, interval * 60000),
+	]);
 
 	if (resume) {
 		user.send({
@@ -95,9 +99,10 @@ async function callback(interaction, deck) {
 	const interval = interaction.options.getInteger("interval");
 
 	if (stop) {
-		if (sessions.has(userId)) {
-			clearInterval(sessions.get(userId));
-			sessions.delete(userId);
+		if (sessions.has(getKey(userId, deck))) {
+			const [_, intervalId] = sessions.get(getKey(userId, deck));
+			clearInterval(intervalId);
+			sessions.delete(getKey(userId, deck));
 			interaction.reply({ content: "Stopped your learning session.", flags: MessageFlags.Ephemeral });
 		} else {
 			interaction.reply({ content: "No active learning session to stop.", flags: MessageFlags.Ephemeral });
@@ -108,15 +113,22 @@ async function callback(interaction, deck) {
 	const user = await interaction.client.users.fetch(userId);
 
 	if (pause) {
-		if (!sessions.has(userId)) {
-			interaction.reply({ content: "No active session to pause.", flags: MessageFlags.Ephemeral });
+		if (!sessions.has(getKey(userId, deck))) {
+			interaction.reply({
+				content: `No active session to pause for the deck ${deck}.`,
+				flags: MessageFlags.Ephemeral,
+			});
 			return;
 		}
-		clearInterval(sessions.get(userId));
-		sessions.delete(userId);
-		interaction.reply({ content: `Paused your session for ${pause} minutes.`, flags: MessageFlags.Ephemeral });
+		const [oldInterval, intervalId] = sessions.get(getKey(userId, deck));
+		clearInterval(intervalId);
+		sessions.delete(getKey(userId, deck));
+		interaction.reply({
+			content: `Paused your session for ${pause} minutes for the deck ${deck}.`,
+			flags: MessageFlags.Ephemeral,
+		});
 		setTimeout(() => {
-			startSession(deck, interval, user, true);
+			startSession(deck, oldInterval, user, true);
 		}, pause * 60000);
 		return;
 	}
@@ -131,8 +143,9 @@ async function callback(interaction, deck) {
 		return;
 	}
 
-	if (sessions.has(userId)) {
-		clearInterval(sessions.get(userId));
+	if (sessions.has(getKey(userId, deck))) {
+		const [_, intervalId] = sessions.get(getKey(userId, deck));
+		clearInterval(intervalId);
 	}
 
 	startSession(deck, interval, user, false);
@@ -156,11 +169,11 @@ module.exports = {
 				.setDescription("Pauses the current learning session")
 				.setRequired(false)
 				.addChoices([
+					{ name: "1分", value: 1 },
 					{ name: "15分", value: 15 },
 					{ name: "1時間", value: 60 },
 					{ name: "3時間", value: 60 * 3 },
 					{ name: "8時間", value: 60 * 8 },
-					{ name: "24時間", value: 60 * 24 },
 					{ name: "24時間", value: 60 * 24 },
 				])
 		)
