@@ -55,89 +55,79 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 				new SlashCommandBuilder()
 					.setName("ask")
 					.setDescription("Quizzes you with a random card from a deck.")
-					.addStringOption((option) =>
-						option.setName("deck").setDescription("The deck name").setRequired(false)
-					),
+					.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
 				new SlashCommandBuilder()
 					.setName("add")
 					.setDescription("Adds a new card to a deck.")
-					.addStringOption((option) =>
-						option.setName("kanji").setDescription("The kanjis writing").setRequired(true)
+					.addStringOption((opt) =>
+						opt.setName("kanji").setDescription("The kanjis writing").setRequired(true)
 					)
-					.addStringOption((option) =>
-						option.setName("reading").setDescription("The kana writing").setRequired(true)
+					.addStringOption((opt) =>
+						opt.setName("reading").setDescription("The kana writing").setRequired(true)
 					)
-					.addStringOption((option) =>
-						option.setName("meanings").setDescription("The meanings").setRequired(true)
+					.addStringOption((opt) => opt.setName("meanings").setDescription("The meanings").setRequired(true))
+					.addStringOption((opt) =>
+						opt.setName("sentence").setDescription("The sentence it was found in").setRequired(false)
 					)
-					.addStringOption((option) =>
-						option.setName("sentence").setDescription("The sentence it was found in").setRequired(false)
-					)
-					.addStringOption((option) =>
-						option.setName("deck").setDescription("The deck name").setRequired(false)
-					),
+					.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
 				new SlashCommandBuilder()
 					.setName("load")
 					.setDescription("Loads your anki's exported file in a deck.")
-					.addAttachmentOption((option) =>
-						option.setName("file").setDescription("The file to load").setRequired(true)
+					.addAttachmentOption((opt) =>
+						opt.setName("file").setDescription("The file to load").setRequired(true)
 					)
-					.addStringOption((option) =>
-						option.setName("deck").setDescription("The deck name").setRequired(false)
-					),
+					.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
 				new SlashCommandBuilder()
 					.setName("default")
 					.setDescription(
 						"Tells you what your default deck is, or changes your default deck if you provide one."
 					)
-					.addStringOption((option) =>
-						option.setName("deck").setDescription("The default deck name").setRequired(false)
+					.addStringOption((opt) =>
+						opt.setName("deck").setDescription("The default deck name").setRequired(false)
 					),
 				new SlashCommandBuilder()
 					.setName("info")
 					.setDescription("Shows informations about a deck.")
-					.addStringOption((option) =>
-						option.setName("deck").setDescription("The deck name").setRequired(false)
-					),
+					.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
 				new SlashCommandBuilder()
 					.setName("clear")
 					.setDescription("Clears all cards from a deck.")
-					.addStringOption((option) =>
-						option.setName("deck").setDescription("The deck name").setRequired(false)
-					),
+					.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
 				new SlashCommandBuilder()
 					.setName("remove")
 					.setDescription("Removes a card from a deck.")
-					.addStringOption((option) =>
-						option.setName("kanji").setDescription("The kanjis writing").setRequired(true)
+					.addStringOption((opt) =>
+						opt.setName("kanji").setDescription("The kanjis writing").setRequired(true)
 					)
-					.addStringOption((option) =>
-						option.setName("deck").setDescription("The deck name").setRequired(false)
-					),
+					.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
 				new SlashCommandBuilder()
 					.setName("edit")
 					.setDescription("Edits a card from a deck.")
-					.addStringOption((option) =>
-						option.setName("kanji").setDescription("The kanjis writing").setRequired(true)
+					.addStringOption((opt) =>
+						opt.setName("kanji").setDescription("The kanjis writing").setRequired(true)
 					)
-					.addStringOption((option) =>
-						option.setName("reading").setDescription("The kana writing").setRequired(true)
+					.addStringOption((opt) =>
+						opt.setName("reading").setDescription("The kana writing").setRequired(true)
 					)
-					.addStringOption((option) =>
-						option.setName("meanings").setDescription("The meanings").setRequired(true)
+					.addStringOption((opt) => opt.setName("meanings").setDescription("The meanings").setRequired(true))
+					.addStringOption((opt) =>
+						opt.setName("sentence").setDescription("The sentence it was found in").setRequired(false)
 					)
-					.addStringOption((option) =>
-						option.setName("sentence").setDescription("The sentence it was found in").setRequired(false)
-					)
-					.addStringOption((option) =>
-						option.setName("deck").setDescription("The deck name").setRequired(false)
-					),
+					.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
 				new SlashCommandBuilder()
 					.setName("drop")
 					.setDescription("Drops a deck.")
-					.addStringOption((option) =>
-						option.setName("deck").setDescription("The deck name").setRequired(false)
-					),
+					.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
+				new SlashCommandBuilder()
+					.setName("learn")
+					.setDescription("Periodically quizzes you with a random card from a deck or some decks.")
+					.addBooleanOption((opt) =>
+						opt.setName("stop").setDescription("Stop the current learning session").setRequired(false)
+					)
+					.addIntegerOption((opt) =>
+						opt.setName("interval").setDescription("Interval in minutes between quizzes").setRequired(false)
+					)
+					.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
 			].map((command) => command.toJSON()),
 		});
 
