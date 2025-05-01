@@ -43,6 +43,4 @@ async function callback(interaction) {
 	});
 }
 
-module.exports = {
-	callback,
-};
+module.exports = callback;

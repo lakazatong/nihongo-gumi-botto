@@ -63,7 +63,7 @@ class DecksDatabase {
 		});
 	}
 
-	getRandomDeck(interaction, deck, callback) {
+	getRandomCard(interaction, deck, callback) {
 		this.db.get("SELECT * FROM decks WHERE deck = ? ORDER BY RANDOM() LIMIT 1", [deck], (err, row) => {
 			if (this.#handleGetError(interaction, err)) return;
 			if (!row) {
@@ -77,14 +77,14 @@ class DecksDatabase {
 		});
 	}
 
-	getDeckById(interaction, id, callback) {
+	getCardById(interaction, id, callback) {
 		this.db.get("SELECT * FROM decks WHERE id = ?", [id], (err, row) => {
 			if (this.#handleGetError(interaction, err)) return;
 			callback(row);
 		});
 	}
 
-	getDeckByKanji(interaction, deck, kanji, callback) {
+	getCardByKanji(interaction, deck, kanji, callback) {
 		this.db.get("SELECT * FROM decks WHERE deck = ? AND kanji = ?", [deck, kanji], (err, row) => {
 			if (this.#handleGetError(interaction, err)) return;
 			if (!row) {
@@ -196,6 +196,13 @@ class DecksDatabase {
 		this.db.run("UPDATE decks SET score = ? WHERE id = ?", [newScore, id], (err) => {
 			if (this.#handleRunError(interaction, err)) return;
 			callback(this);
+		});
+	}
+
+	dropDeck(interaction, deck, callback) {
+		this.db.run("DELETE FROM decks WHERE deck = ?", [deck], (err) => {
+			if (this.#handleRunError(interaction, err)) return;
+			callback?.(this);
 		});
 	}
 }

@@ -1,14 +1,14 @@
 "use strict";
 
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
-const { db, getDeckById } = require("../database/decks.js");
+const db = require("../database/decks.js");
 
 const getIncorrectButton = () =>
 	new ButtonBuilder().setCustomId("incorrect").setLabel("❌").setStyle(ButtonStyle.Danger);
 
 async function callback(interaction) {
 	const [_, id] = interaction.customId.split("_");
-	getDeckById(interaction, id, (row) => {
+	db.getCardById(interaction, id, (row) => {
 		db.updateScoreById(interaction, id, Math.max(0, row.score - 1), async (response) => {
 			const button = new ActionRowBuilder().addComponents(getIncorrectButton().setDisabled(true));
 			await interaction.update({

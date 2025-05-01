@@ -1,6 +1,7 @@
 "use strict";
 
 const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, Partials } = require("discord.js");
+const { checkDeckOwnership, checkOrCreateDeckOwnership } = require("./utils/deck.js");
 
 require("dotenv").config();
 
@@ -131,6 +132,12 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 					.addStringOption((option) =>
 						option.setName("deck").setDescription("The deck name").setRequired(false)
 					),
+				new SlashCommandBuilder()
+					.setName("drop")
+					.setDescription("Drops a deck.")
+					.addStringOption((option) =>
+						option.setName("deck").setDescription("The deck name").setRequired(false)
+					),
 			].map((command) => command.toJSON()),
 		});
 
@@ -146,9 +153,19 @@ client.once("ready", () => {
 
 client.on("interactionCreate", async (interaction) => {
 	if (interaction.isCommand()) {
-		const { commandName } = interaction;
-		const mod = require("./commands/" + commandName + ".js");
-		if (mod) mod.callback(interaction);
+		const callback = require("./commands/" + interaction.commandName + ".js");
+		if (callback) {
+			if (["default", "help", "ping"].includes(interaction.commandName)) {
+				callback(interaction);
+			} else {
+				(["add", "load"].includes(interaction.commandName) ? checkOrCreateDeckOwnership : checkDeckOwnership)(
+					interaction,
+					(deck) => {
+						callback(interaction, deck);
+					}
+				);
+			}
+		}
 	} else if (interaction.isButton()) {
 		const [action, _] = interaction.customId.split("_");
 		const mod = require("./buttons/" + action + ".js");

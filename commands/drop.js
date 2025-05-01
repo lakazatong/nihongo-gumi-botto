@@ -4,9 +4,9 @@ const { MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
 
 async function callback(interaction, deck) {
-	db.clearDeck(interaction, deck, (response) => {
+	db.dropDeck(interaction, deck, (response) => {
 		interaction.reply({
-			content: "Deck cleared successfully!",
+			content: `The deck ${deck} was successfully dropped.`,
 			flags: MessageFlags.Ephemeral,
 		});
 	});
