@@ -1,45 +1,34 @@
 "use strict";
 
-const { ActionRowBuilder, MessageFlags } = require("discord.js");
-const { db, getOwner, getDefaultDeck } = require("../database/decks.js");
-const { getCorrectButton } = require("../buttons/correct.js");
-const { getIncorrectButton } = require("../buttons/incorrect.js");
+const { MessageFlags } = require("discord.js");
+const { db, getDefaultDeck, getOwner } = require("../database/decks.js");
 
 async function callback(interaction) {
+	const userId = interaction.user.id;
+	const deck = interaction.options.getString("deck") || null;
+
 	function help(deck) {
-		db.get("SELECT * FROM decks WHERE deck = ? ORDER BY RANDOM() LIMIT 1", [deck], (err, row) => {
-			if (err) {
-				console.error("db.get", err);
-				return;
-			}
-			if (!row) {
+		db.get(
+			`SELECT COUNT(*) as count, SUM(score) as total, AVG(score) as average FROM decks WHERE deck = ?`,
+			[deck],
+			(err, row) => {
+				if (err) {
+					console.error("db", err);
+					interaction.reply({
+						content: "An error occurred while retrieving deck info.",
+						flags: MessageFlags.Ephemeral,
+					});
+					return;
+				}
+
 				interaction.reply({
-					content: "Empty deck.",
+					content: `Deck: ${deck}\nCards: ${row.count}\nTotal Score: ${row.total || 0}\nAverage Score: ${
+						row.average?.toFixed(2) || 0
+					}`,
 					flags: MessageFlags.Ephemeral,
 				});
-				return;
 			}
-			const buttons = new ActionRowBuilder().addComponents(
-				getCorrectButton().setCustomId(`correct_${row.id}`),
-				getIncorrectButton().setCustomId(`incorrect_${row.id}`)
-			);
-
-			interaction.reply({
-				content: row.sentence
-					? `${row.kanji}\n||${row.reading}||\n||${row.meanings}||\n||${row.sentence}||`
-					: `${row.kanji}\n||${row.reading}||\n||${row.meanings}||`,
-				components: [buttons],
-			});
-
-			setTimeout(async () => {
-				interaction.editReply({
-					content: row.sentence
-						? `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.sentence}`
-						: `${row.kanji}\n${row.reading}\n${row.meanings}`,
-					components: [],
-				});
-			}, 30000);
-		});
+		);
 	}
 
 	function help2(deck) {
@@ -69,8 +58,6 @@ async function callback(interaction) {
 		});
 	}
 
-	const userId = interaction.user.id;
-	const deck = interaction.options.getString("deck") || null;
 	if (deck) {
 		help2(deck);
 	} else {

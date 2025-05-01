@@ -5,7 +5,6 @@ const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, Partials }
 require("dotenv").config();
 
 // long requires
-require("./database/kanjis.js");
 require("./database/decks.js");
 require("./utils/anki_parser.js");
 
@@ -78,7 +77,7 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 					),
 				new SlashCommandBuilder()
 					.setName("load")
-					.setDescription("Loads your anki's exported file in the a Deck.")
+					.setDescription("Loads your anki's exported file in a deck.")
 					.addAttachmentOption((option) =>
 						option.setName("file").setDescription("The file to load").setRequired(true)
 					)
@@ -87,16 +86,18 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 					),
 				new SlashCommandBuilder()
 					.setName("default")
-					.setDescription("Changes your default deck.")
+					.setDescription(
+						"Tells you what your default deck is, or changes your default deck if you provide one."
+					)
 					.addStringOption((option) =>
-						option.setName("deck").setDescription("The default deck name").setRequired(true)
+						option.setName("deck").setDescription("The default deck name").setRequired(false)
 					),
 			].map((command) => command.toJSON()),
 		});
 
 		console.log("Slash commands online.");
 	} catch (err) {
-		console.error(err);
+		console.error("rest.put", err);
 	}
 })();
 

@@ -1,8 +1,7 @@
 "use strict";
 
 const { MessageFlags } = require("discord.js");
-const { kanjis_db } = require("../database/kanjis.js");
-const { getOwner, setOwner, getDefaultDeck } = require("../database/decks.js");
+const { db, getOwner, setOwner, getDefaultDeck } = require("../database/decks.js");
 
 async function callback(interaction) {
 	const kanji = interaction.options.getString("kanji");
@@ -11,8 +10,8 @@ async function callback(interaction) {
 	const sentence = interaction.options.getString("sentence") || null;
 
 	function help(deck) {
-		kanjis_db.run(
-			"INSERT INTO kanjis (deck, kanji, reading, meanings, sentence) VALUES (?, ?, ?, ?, ?)",
+		db.run(
+			"INSERT INTO decks (deck, kanji, reading, meanings, sentence) VALUES (?, ?, ?, ?, ?)",
 			[deck, kanji, reading, meanings, sentence],
 			async (err) => {
 				if (err) {
@@ -22,7 +21,7 @@ async function callback(interaction) {
 							flags: MessageFlags.Ephemeral,
 						});
 					} else {
-						console.error(err);
+						console.error("db.run", err);
 						await interaction.reply({
 							content: "An error occurred while saving the card.",
 							flags: MessageFlags.Ephemeral,
@@ -41,7 +40,7 @@ async function callback(interaction) {
 	function help2(deck) {
 		getOwner(deck, (err, owner_id) => {
 			if (err) {
-				console.error(err);
+				console.error("getOwner", err);
 				interaction.reply({
 					content: "An error occurred while getting the deck owner.",
 					flags: MessageFlags.Ephemeral,
@@ -70,7 +69,7 @@ async function callback(interaction) {
 	} else {
 		getDefaultDeck(userId, (err, deck) => {
 			if (err) {
-				console.error(err);
+				console.error("getDefaultDeck", err);
 				interaction.reply({
 					content: "An error occurred while fetching the default deck.",
 					flags: MessageFlags.Ephemeral,

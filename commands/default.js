@@ -1,14 +1,42 @@
 "use strict";
 
 const { MessageFlags } = require("discord.js");
-const { getOwner, updateDefault } = require("../database/decks.js");
+const { getOwner, updateDefault, getDefaultDeck } = require("../database/decks.js");
 
 async function callback(interaction) {
 	const userId = interaction.user.id;
 	const deck = interaction.options.getString("deck");
+
+	if (!deck) {
+		getDefaultDeck(userId, (err, defaultDeck) => {
+			if (err) {
+				console.error("getDefaultDeck", err);
+				interaction.reply({
+					content: "An error occurred while getting the default deck.",
+					flags: MessageFlags.Ephemeral,
+				});
+				return;
+			}
+
+			if (!defaultDeck) {
+				interaction.reply({
+					content: "You have no default deck.",
+					flags: MessageFlags.Ephemeral,
+				});
+				return;
+			}
+
+			interaction.reply({
+				content: `Your default deck is ${defaultDeck}.`,
+				flags: MessageFlags.Ephemeral,
+			});
+		});
+		return;
+	}
+
 	getOwner(deck, (err, owner_id) => {
 		if (err) {
-			console.error(err);
+			console.error("getOwner", err);
 			interaction.reply({
 				content: "An error occurred while getting the deck owner.",
 				flags: MessageFlags.Ephemeral,

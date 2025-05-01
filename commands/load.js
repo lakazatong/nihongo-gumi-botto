@@ -4,8 +4,7 @@ const { MessageFlags } = require("discord.js");
 const fs = require("fs");
 const axios = require("axios");
 const { saveCardsToJson } = require("../utils/anki_parser.js");
-const { kanjis_db } = require("../database/kanjis.js");
-const { getOwner, setOwner, getDefaultDeck } = require("../database/decks.js");
+const { db, getOwner, setOwner, getDefaultDeck } = require("../database/decks.js");
 
 async function callback(interaction) {
 	const attachment = interaction.options.getAttachment("file");
@@ -43,24 +42,29 @@ async function callback(interaction) {
 
 			JSON.parse(fileContent).forEach(({ kanji, reading, meanings, sentence }) => {
 				const formattedMeanings = Object.entries(meanings)
-					.map(([category, values]) => `${category}: ${values.join(", ")}`)
-					.join("\n");
+					.map(([category, values]) => `${category}:\n- ${values.join("\n- ")}`)
+					.join("\n\n");
 
-				kanjis_db.run(
-					"INSERT INTO kanjis (deck, kanji, reading, meanings, sentence) VALUES (?, ?, ?, ?, ?)",
+				db.run(
+					`INSERT INTO decks (deck, kanji, reading, meanings, sentence)
+						 VALUES (?, ?, ?, ?, ?)
+						 ON CONFLICT(deck, kanji) DO UPDATE SET
+							 reading = excluded.reading,
+							 meanings = excluded.meanings,
+							 sentence = excluded.sentence`,
 					[deck, kanji, reading, formattedMeanings, sentence || null],
-					async (err) => {
-						if (err) console.error(err);
+					(err) => {
+						if (err) console.error("db.run", err);
 					}
 				);
 			});
 
 			await Promise.all([
 				fs.unlink(cardsPath, (err) => {
-					console.error(err);
+					console.error("fs.unlink", err);
 				}),
 				fs.unlink(filename, (err) => {
-					console.error(err);
+					console.error("fs.unlink", err);
 				}),
 			]);
 
@@ -68,7 +72,7 @@ async function callback(interaction) {
 				content: `All kanjis of ${filename} were successfully loaded into the deck ${deck}!`,
 			});
 		} catch (err) {
-			console.error(err);
+			console.error("load", err);
 			await interaction.editReply({
 				content: "An error occurred while getting the file.",
 				flags: MessageFlags.Ephemeral,
@@ -79,7 +83,7 @@ async function callback(interaction) {
 	function help2(deck) {
 		getOwner(deck, (err, owner_id) => {
 			if (err) {
-				console.error(err);
+				console.error("getOwner", err);
 				interaction.reply({
 					content: "An error occurred while getting the deck owner.",
 					flags: MessageFlags.Ephemeral,
@@ -108,7 +112,7 @@ async function callback(interaction) {
 	} else {
 		getDefaultDeck(userId, (err, deck) => {
 			if (err) {
-				console.error(err);
+				console.error("getDefaultDeck", err);
 				interaction.reply({
 					content: "An error occurred while fetching the default deck.",
 					flags: MessageFlags.Ephemeral,

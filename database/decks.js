@@ -2,17 +2,29 @@
 
 const sqlite3 = require("sqlite3").verbose();
 
-const decks_db = new sqlite3.Database("./database/decks.db", (err) => {
+const db = new sqlite3.Database("./database/decks.db", (err) => {
 	if (err) {
 		console.error("Error opening decks.db:", err.message);
 	} else {
-		decks_db.run(`
+		db.run(`
+            CREATE TABLE IF NOT EXISTS decks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                deck TEXT NOT NULL,
+                kanji TEXT NOT NULL,
+                reading TEXT NOT NULL,
+                meanings TEXT NOT NULL,
+                sentence TEXT,
+                score INTEGER DEFAULT 0,
+                UNIQUE (deck, kanji)
+            )
+        `);
+		db.run(`
 			CREATE TABLE IF NOT EXISTS defaults (
 				user_id TEXT PRIMARY KEY,
 				deck TEXT NOT NULL
 			)
 		`);
-		decks_db.run(`
+		db.run(`
             CREATE TABLE IF NOT EXISTS owners (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
 				user_id TEXT NOT NULL,
@@ -23,7 +35,7 @@ const decks_db = new sqlite3.Database("./database/decks.db", (err) => {
 });
 
 function getOwner(deck, callback) {
-	decks_db.get(`SELECT * FROM owners WHERE deck = ?`, [deck], (err, row) => {
+	db.get(`SELECT * FROM owners WHERE deck = ?`, [deck], (err, row) => {
 		if (err) {
 			callback(err);
 			return;
@@ -33,15 +45,15 @@ function getOwner(deck, callback) {
 }
 
 function setOwner(userId, deck) {
-	decks_db.run(`INSERT INTO owners (user_id, deck) VALUES (?, ?)`, [userId, deck]);
+	db.run(`INSERT INTO owners (user_id, deck) VALUES (?, ?)`, [userId, deck]);
 }
 
 function updateDefault(userId, deck) {
-	decks_db.run(`INSERT OR REPLACE INTO defaults (user_id, deck) VALUES (?, ?)`, [userId, deck]);
+	db.run(`INSERT OR REPLACE INTO defaults (user_id, deck) VALUES (?, ?)`, [userId, deck]);
 }
 
 function getDefaultDeck(userId, callback) {
-	decks_db.get(`SELECT deck FROM defaults WHERE user_id = ?`, [userId], (err, row) => {
+	db.get(`SELECT deck FROM defaults WHERE user_id = ?`, [userId], (err, row) => {
 		if (err) {
 			callback(err);
 			return;
@@ -52,7 +64,7 @@ function getDefaultDeck(userId, callback) {
 }
 
 module.exports = {
-	decks_db,
+	db,
 	getOwner,
 	setOwner,
 	updateDefault,
