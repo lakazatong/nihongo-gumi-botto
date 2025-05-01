@@ -2,7 +2,7 @@
 
 const { MessageFlags } = require("discord.js");
 const { kanjis_db } = require("../database/kanjis.js");
-const { isOwner, getOrDefaultDeck } = require("../database/decks.js");
+const { getOwner, setOwner, getDefaultDeck } = require("../database/decks.js");
 
 async function callback(interaction) {
 	const kanji = interaction.options.getString("kanji");
@@ -30,7 +30,7 @@ async function callback(interaction) {
 					}
 				} else {
 					await interaction.reply({
-						content: "Kanji saved successfully!",
+						content: "Kanji added successfully!",
 						flags: MessageFlags.Ephemeral,
 					});
 				}
@@ -39,56 +39,54 @@ async function callback(interaction) {
 	}
 
 	function help2(deck) {
-		getOrDefaultDeck(interaction.user.id, interaction.user.username, (err, deck) => {
+		getOwner(deck, (err, owner_id) => {
 			if (err) {
 				console.error(err);
 				interaction.reply({
-					content: "An error occurred while fetching the deck.",
+					content: "An error occurred while getting the deck owner.",
 					flags: MessageFlags.Ephemeral,
 				});
 				return;
 			}
-			help(deck);
+
+			if (owner_id === null) {
+				setOwner(userId, deck);
+				help(deck);
+			} else if (owner_id === userId) {
+				help(deck);
+			} else {
+				interaction.reply({
+					content: "You are not the owner of this deck.",
+					flags: MessageFlags.Ephemeral,
+				});
+			}
 		});
 	}
 
+	const userId = interaction.user.id;
 	const deck = interaction.options.getString("deck") || null;
 	if (deck) {
-		exists(deck, (err, bool) => {
+		help2(deck);
+	} else {
+		getDefaultDeck(userId, (err, deck) => {
 			if (err) {
 				console.error(err);
 				interaction.reply({
-					content: "An error occurred while checking if the deck exists.",
+					content: "An error occurred while fetching the default deck.",
 					flags: MessageFlags.Ephemeral,
 				});
 				return;
 			}
-
-			if (bool) {
-				isOwner(interaction.user.id, deck, (err, bool) => {
-					if (err) {
-						console.error(err);
-						interaction.reply({
-							content: "An error occurred while checking the deck owner.",
-							flags: MessageFlags.Ephemeral,
-						});
-						return;
-					}
-					if (bool) {
-						help(deck);
-					} else {
-						interaction.reply({
-							content: "You are not the owner of this deck.",
-							flags: MessageFlags.Ephemeral,
-						});
-					}
-				});
-			} else {
+			if (deck) {
 				help2(deck);
+			} else {
+				interaction.reply({
+					content: "No deck was given and no default deck was set.",
+					flags: MessageFlags.Ephemeral,
+				});
+				return;
 			}
 		});
-	} else {
-		help2(deck);
 	}
 }
 

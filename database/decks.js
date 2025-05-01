@@ -23,35 +23,29 @@ const decks_db = new sqlite3.Database("./database/decks.db", (err) => {
 	}
 });
 
-function exists(deck, callback) {
+function getOwner(deck, callback) {
 	decks_db.get(`SELECT * FROM owners WHERE deck = ?`, [deck], (err, row) => {
 		if (err) {
 			callback(err);
 			return;
 		}
-		callback(null, !!row);
-	});
-}
-
-function isOwner(userId, deck, callback) {
-	decks_db.get(`SELECT * FROM owners WHERE user_id = ? AND deck = ?`, [userId, deck], (err, row) => {
-		if (err) {
-			callback(err);
-			return;
-		}
-		callback(null, !!row);
+		callback(null, row?.user_id || null);
 	});
 }
 
 function updateDefault(userId, deck) {
-	decks_db.run(`UPDATE defaults SET deck = ? WHERE user_id = ?`, [deck, userId], function (err) {
-		if (err) {
-			return;
-		}
-	});
+	decks_db.run(
+		`INSERT INTO defaults (user_id, deck) VALUES (?, ?)
+		ON CONFLICT(user_id) DO UPDATE SET deck = excluded.deck`,
+		[userId, deck]
+	);
 }
 
-function getDeck(userId, callback) {
+function setOwner(userId, deck) {
+	decks_db.run(`INSERT INTO owners (user_id, deck) VALUES (?, ?)`, [userId, deck]);
+}
+
+function getDefaultDeck(userId, callback) {
 	decks_db.get(`SELECT deck FROM defaults WHERE user_id = ?`, [userId], (err, row) => {
 		if (err) {
 			callback(err);
@@ -62,23 +56,10 @@ function getDeck(userId, callback) {
 	});
 }
 
-function addDeck(userId, deck) {
-	decks_db.run(`INSERT INTO defaults (user_id, deck) VALUES (?, ?)`, [userId, deck], function (err) {
-		if (err) {
-			return;
-		}
-	});
-	decks_db.run(`INSERT INTO owners (user_id, deck) VALUES (?, ?)`, [userId, deck], function (err) {
-		if (err) {
-			return;
-		}
-	});
-}
-
 module.exports = {
 	decks_db,
-	exists,
-	isOwner,
-	updateDeck: updateDefault,
-	getDeck,
+	getOwner,
+	setOwner,
+	updateDefault,
+	getDefaultDeck,
 };

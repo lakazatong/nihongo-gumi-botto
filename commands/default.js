@@ -1,55 +1,31 @@
 "use strict";
 
-const { MessageFlags } = require("discord.js");
-const { updateDeck, getDeck } = require("../database/decks.js");
+const { getOwner, updateDefault } = require("../database/decks.js");
 
 async function callback(interaction) {
 	const userId = interaction.user.id;
-	const newDeck = interaction.options.getString("deck");
-
-	getDeck(userId, async (err, row) => {
+	const deck = interaction.options.getString("deck");
+	getOwner(deck, (err, owner_id) => {
 		if (err) {
 			console.error(err);
 			interaction.reply({
-				content: "An error occurred while fetching the deck.",
+				content: "An error occurred while getting the deck owner.",
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
 
-		if (row) {
-			updateDeck(userId, newDeck);
-		} else {
-			await interaction.reply({
-				content: "You don't have a deck yet. Please create one first.",
+		if (owner_id !== userId) {
+			interaction.reply({
+				content: "You are not the owner of this deck.",
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
-	});
 
-	decks_db.run("UPDATE decks SET deck = ? WHERE user_id = ?", [newDeck, userId], async (err) => {
-		if (err) {
-			console.error(err);
-			return;
-		}
-
-		decks_db.run(`INSERT INTO decks (user_id, deck) VALUES (?, ?)`, [userId, defaultDeck], function (err) {
-			if (err) {
-				callback(err);
-				return;
-			}
-			decks_db.run(`INSERT INTO owners (user_id, deck) VALUES (?, ?)`, [userId, defaultDeck], function (err) {
-				if (err) {
-					callback(err);
-					return;
-				}
-				callback(null, defaultDeck);
-			});
-		});
-
-		await interaction.reply({
-			content: `Successfully updated your deck to: ${newDeck}`,
+		updateDefault(userId, deck);
+		interaction.reply({
+			content: `Default deck set to ${deck}.`,
 			flags: MessageFlags.Ephemeral,
 		});
 	});

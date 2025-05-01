@@ -54,13 +54,13 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 				new SlashCommandBuilder().setName("ping").setDescription("Replies with Pong!"),
 				new SlashCommandBuilder()
 					.setName("ask")
-					.setDescription("Quizzes you with a random card from the deck.")
+					.setDescription("Quizzes you with a random card from a deck.")
 					.addStringOption((option) =>
 						option.setName("deck").setDescription("The deck name").setRequired(false)
 					),
 				new SlashCommandBuilder()
-					.setName("save")
-					.setDescription("Saves a new card to the deck.")
+					.setName("add")
+					.setDescription("Adds a new card to a deck.")
 					.addStringOption((option) =>
 						option.setName("kanji").setDescription("The kanjis writing").setRequired(true)
 					)
@@ -78,7 +78,7 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 					),
 				new SlashCommandBuilder()
 					.setName("load")
-					.setDescription("Loads your anki's exported file in the deck.")
+					.setDescription("Loads your anki's exported file in the a.")
 					.addAttachmentOption((option) =>
 						option.setName("file").setDescription("The file to load").setRequired(true)
 					)
