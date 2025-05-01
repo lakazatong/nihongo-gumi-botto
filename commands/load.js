@@ -4,7 +4,7 @@ const { MessageFlags } = require("discord.js");
 const fs = require("fs");
 const axios = require("axios");
 const { saveCardsToJson } = require("../utils/anki_parser.js");
-const { db, getOwner, setOwner, getDefaultDeck } = require("../database/decks.js");
+const db = require("../database/decks.js");
 
 async function callback(interaction) {
 	const userId = interaction.user.id;
@@ -47,19 +47,12 @@ async function callback(interaction) {
 					.map(([category, values]) => `${category}:\n- ${values.join("\n- ")}`)
 					.join("\n\n");
 
-				db.run(
-					`INSERT INTO decks (deck, kanji, reading, meanings, sentence)
-						 VALUES (?, ?, ?, ?, ?)
-						 ON CONFLICT(deck, kanji) DO UPDATE SET
-							 reading = excluded.reading,
-							 meanings = excluded.meanings,
-							 sentence = excluded.sentence`,
+				db.db.run(
+					`INSERT OR REPLACE INTO decks (deck, kanji, reading, meanings, sentence)
+						 VALUES (?, ?, ?, ?, ?)`,
 					[deck, kanji, reading, formattedMeanings, sentence || null],
 					(err) => {
-						if (err) {
-							console.error("db.run", err);
-							errorKanji.push(kanji);
-						}
+						errorKanji.push(kanji);
 					}
 				);
 			});
@@ -92,16 +85,7 @@ async function callback(interaction) {
 	}
 
 	function help2(deck) {
-		getOwner(deck, (err, owner_id) => {
-			if (err) {
-				console.error("getOwner", err);
-				interaction.reply({
-					content: "An error occurred with sqlite.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-
+		db.getOwner(interaction, deck, (owner_id) => {
 			if (owner_id === null) {
 				setOwner(userId, deck);
 				help(deck);
@@ -121,15 +105,7 @@ async function callback(interaction) {
 	if (deck) {
 		help2(deck);
 	} else {
-		getDefaultDeck(userId, (err, deck) => {
-			if (err) {
-				console.error("getDefaultDeck", err);
-				interaction.reply({
-					content: "An error occurred with sqlite.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
+		db.getDefaultDeck(interaction, userId, (deck) => {
 			if (deck) {
 				help2(deck);
 			} else {

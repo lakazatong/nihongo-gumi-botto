@@ -8,11 +8,7 @@ const getCorrectButton = () => new ButtonBuilder().setCustomId("correct").setLab
 async function callback(interaction) {
 	const [_, id] = interaction.customId.split("_");
 	getDeckById(interaction, id, (row) => {
-		db.run("UPDATE decks SET score = ? WHERE id = ?", [row.score + 1, id], async (err) => {
-			if (err) {
-				console.error("db.run", err);
-				return;
-			}
+		db.updateScoreById(interaction, id, row.score + 1, async (response) => {
 			const button = new ActionRowBuilder().addComponents(getCorrectButton().setDisabled(true));
 			await interaction.update({
 				content: row.sentence

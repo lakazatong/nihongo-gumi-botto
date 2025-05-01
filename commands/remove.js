@@ -1,24 +1,15 @@
 "use strict";
 
 const { MessageFlags } = require("discord.js");
-const { db, getOwner, getDefaultDeck } = require("../database/decks.js");
+const db = require("../database/decks.js");
 
 async function callback(interaction) {
 	const userId = interaction.user.id;
 	const kanji = interaction.options.getString("kanji");
 
 	function help(deck) {
-		db.run("DELETE FROM decks WHERE deck = ? AND kanji = ?", [deck, kanji], function (err) {
-			if (err) {
-				console.error("db.run", err);
-				interaction.reply({
-					content: "An error occurred with sqlite.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-
-			if (this.changes === 0) {
+		db.deleteCard(interaction, deck, kanji, (response) => {
+			if (response.changes === 0) {
 				interaction.reply({
 					content: "No matching kanji found in the specified deck.",
 					flags: MessageFlags.Ephemeral,
@@ -34,16 +25,7 @@ async function callback(interaction) {
 	}
 
 	function help2(deck) {
-		getOwner(deck, (err, owner_id) => {
-			if (err) {
-				console.error("getOwner", err);
-				interaction.reply({
-					content: "An error occurred with sqlite.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-
+		db.getOwner(interaction, deck, (owner_id) => {
 			if (owner_id === null) {
 				interaction.reply({
 					content: "The deck does not exist.",
@@ -65,15 +47,7 @@ async function callback(interaction) {
 	if (deck) {
 		help2(deck);
 	} else {
-		getDefaultDeck(userId, (err, deck) => {
-			if (err) {
-				console.error("getDefaultDeck", err);
-				interaction.reply({
-					content: "An error occurred with sqlite.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
+		db.getDefaultDeck(interaction, userId, (deck) => {
 			if (deck) {
 				help2(deck);
 			} else {

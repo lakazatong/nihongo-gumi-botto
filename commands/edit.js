@@ -1,7 +1,7 @@
 "use strict";
 
 const { MessageFlags } = require("discord.js");
-const { db, getOwner, getDefaultDeck, getDeckEntryByKanji } = require("../database/decks.js");
+const db = require("../database/decks.js");
 
 async function callback(interaction) {
 	const userId = interaction.user.id;
@@ -11,39 +11,18 @@ async function callback(interaction) {
 	const sentence = interaction.options.getString("sentence") || null;
 
 	function help(deck) {
-		getDeckEntryByKanji(interaction, deck, kanji, (row) => {
-			db.run(
-				"UPDATE decks SET reading = ?, meanings = ?, sentence = ? WHERE deck = ? AND kanji = ?",
-				[reading, meanings, sentence, deck, kanji],
-				async (err) => {
-					if (err) {
-						console.error("db.run", err);
-						await interaction.reply({
-							content: "An error occurred with sqlite.",
-							flags: MessageFlags.Ephemeral,
-						});
-					} else {
-						await interaction.reply({
-							content: "Kanji updated successfully!",
-							flags: MessageFlags.Ephemeral,
-						});
-					}
-				}
-			);
+		db.getDeckByKanji(interaction, deck, kanji, (row) => {
+			db.updateCard(interaction, deck, kanji, reading, meanings, sentence, (response) => {
+				interaction.reply({
+					content: "Kanji updated successfully!",
+					flags: MessageFlags.Ephemeral,
+				});
+			});
 		});
 	}
 
 	function help2(deck) {
-		getOwner(deck, (err, owner_id) => {
-			if (err) {
-				console.error("getOwner", err);
-				interaction.reply({
-					content: "An error occurred with sqlite.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-
+		db.getOwner(interaction, deck, (owner_id) => {
 			if (owner_id === null) {
 				interaction.reply({
 					content: "The deck does not exist.",
@@ -65,15 +44,7 @@ async function callback(interaction) {
 	if (deck) {
 		help2(deck);
 	} else {
-		getDefaultDeck(userId, (err, deck) => {
-			if (err) {
-				console.error("getDefaultDeck", err);
-				interaction.reply({
-					content: "An error occurred with sqlite.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
+		db.getDefaultDeck(interaction, userId, (deck) => {
 			if (deck) {
 				help2(deck);
 			} else {

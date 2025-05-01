@@ -1,24 +1,15 @@
 "use strict";
 
 const { MessageFlags } = require("discord.js");
-const { getOwner, updateDefault, getDefaultDeck } = require("../database/decks.js");
+const db = require("../database/decks.js");
 
 async function callback(interaction) {
 	const userId = interaction.user.id;
 	const deck = interaction.options.getString("deck");
 
 	if (!deck) {
-		getDefaultDeck(userId, (err, defaultDeck) => {
-			if (err) {
-				console.error("getDefaultDeck", err);
-				interaction.reply({
-					content: "An error occurred with sqlite.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-
-			if (!defaultDeck) {
+		db.getDefaultDeck(interaction, userId, (deck) => {
+			if (!deck) {
 				interaction.reply({
 					content: "You have no default deck.",
 					flags: MessageFlags.Ephemeral,
@@ -27,23 +18,14 @@ async function callback(interaction) {
 			}
 
 			interaction.reply({
-				content: `Your default deck is ${defaultDeck}.`,
+				content: `Your default deck is ${deck}.`,
 				flags: MessageFlags.Ephemeral,
 			});
 		});
 		return;
 	}
 
-	getOwner(deck, (err, owner_id) => {
-		if (err) {
-			console.error("getOwner", err);
-			interaction.reply({
-				content: "An error occurred with sqlite.",
-				flags: MessageFlags.Ephemeral,
-			});
-			return;
-		}
-
+	db.getOwner(interaction, deck, (owner_id) => {
 		if (owner_id !== null && owner_id !== userId) {
 			interaction.reply({
 				content: "You are not the owner of this deck.",
@@ -52,10 +34,11 @@ async function callback(interaction) {
 			return;
 		}
 
-		updateDefault(userId, deck);
-		interaction.reply({
-			content: `Default deck set to ${deck}.`,
-			flags: MessageFlags.Ephemeral,
+		db.updateDefault(interaction, userId, deck, (response) => {
+			interaction.reply({
+				content: `Default deck set to ${deck}.`,
+				flags: MessageFlags.Ephemeral,
+			});
 		});
 	});
 }

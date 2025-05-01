@@ -1,7 +1,7 @@
 "use strict";
 
 const { ActionRowBuilder, MessageFlags } = require("discord.js");
-const { getOwner, getDefaultDeck, getRandomDeckEntry } = require("../database/decks.js");
+const { db } = require("../database/decks.js");
 const { getCorrectButton } = require("../buttons/correct.js");
 const { getIncorrectButton } = require("../buttons/incorrect.js");
 
@@ -9,7 +9,7 @@ async function callback(interaction) {
 	const userId = interaction.user.id;
 
 	function help(deck) {
-		getRandomDeckEntry(interaction, deck, (row) => {
+		db.getRandomDeck(interaction, deck, (row) => {
 			const buttons = new ActionRowBuilder().addComponents(
 				getCorrectButton().setCustomId(`correct_${row.id}`),
 				getIncorrectButton().setCustomId(`incorrect_${row.id}`)
@@ -34,16 +34,7 @@ async function callback(interaction) {
 	}
 
 	function help2(deck) {
-		getOwner(deck, (err, owner_id) => {
-			if (err) {
-				console.error("getOwner", err);
-				interaction.reply({
-					content: "An error occurred with sqlite.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-
+		db.getOwner(interaction, deck, (owner_id) => {
 			if (owner_id === null) {
 				interaction.reply({
 					content: "The deck does not exist.",
@@ -65,15 +56,7 @@ async function callback(interaction) {
 	if (deck) {
 		help2(deck);
 	} else {
-		getDefaultDeck(userId, (err, deck) => {
-			if (err) {
-				console.error("getDefaultDeck", err);
-				interaction.reply({
-					content: "An error occurred with sqlite.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
+		db.getDefaultDeck(interaction, userId, (deck) => {
 			if (deck) {
 				help2(deck);
 			} else {
