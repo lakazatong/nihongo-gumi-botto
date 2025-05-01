@@ -1,5 +1,6 @@
 "use strict";
 
+const { MessageFlags } = require("discord.js");
 const sqlite3 = require("sqlite3").verbose();
 
 class DecksDatabase {
@@ -202,7 +203,10 @@ class DecksDatabase {
 	dropDeck(interaction, deck, callback) {
 		this.db.run("DELETE FROM decks WHERE deck = ?", [deck], (err) => {
 			if (this.#handleRunError(interaction, err)) return;
-			callback?.(this);
+			this.db.run("DELETE FROM owners WHERE deck = ?", [deck], (err) => {
+				if (this.#handleRunError(interaction, err)) return;
+				callback?.(this);
+			});
 		});
 	}
 }

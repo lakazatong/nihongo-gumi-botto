@@ -16,15 +16,15 @@ async function callback(interaction, deck) {
 		if (sessions.has(userId)) {
 			clearInterval(sessions.get(userId));
 			sessions.delete(userId);
-			interaction.reply({ content: "Stopped your learning session.", ephemeral: true });
+			interaction.reply({ content: "Stopped your learning session.", flags: MessageFlags.Ephemeral });
 		} else {
-			interaction.reply({ content: "No active learning session to stop.", ephemeral: true });
+			interaction.reply({ content: "No active learning session to stop.", flags: MessageFlags.Ephemeral });
 		}
 		return;
 	}
 
 	if (!interval) {
-		interaction.reply({ content: "Interval is required unless stopping.", ephemeral: true });
+		interaction.reply({ content: "Interval is required unless stopping.", flags: MessageFlags.Ephemeral });
 		return;
 	}
 
@@ -61,7 +61,7 @@ async function callback(interaction, deck) {
 					});
 					return;
 				}
-				db.db.get("SELECT * FROM decks WHERE deck = ? ORDER BY RANDOM() LIMIT 1", [deck], (err, row) => {
+				db.db.get("SELECT * FROM decks WHERE deck = ? ORDER BY RANDOM() LIMIT 1", [deck], async (err, row) => {
 					if (err) {
 						console.error("get", err);
 						user.send({
@@ -79,19 +79,9 @@ async function callback(interaction, deck) {
 						return;
 					}
 
-					const buttons = new ActionRowBuilder().addComponents(
-						getCorrectButton().setCustomId(`correct_${row.id}`),
-						getIncorrectButton().setCustomId(`incorrect_${row.id}`)
-					);
+					let message;
 
-					const message = user.send({
-						content: row.sentence
-							? `${row.kanji}\n||${row.reading}||\n||${row.meanings}||\n||${row.sentence}||`
-							: `${row.kanji}\n||${row.reading}||\n||${row.meanings}||`,
-						components: [buttons],
-					});
-
-					setTimeout(() => {
+					const timeoutId = setTimeout(() => {
 						message.edit({
 							content: row.sentence
 								? `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.sentence}`
@@ -99,12 +89,27 @@ async function callback(interaction, deck) {
 							components: [],
 						});
 					}, 30000);
+
+					const buttons = new ActionRowBuilder().addComponents(
+						getCorrectButton().setCustomId(`correct_${row.id}_${timeoutId}`),
+						getIncorrectButton().setCustomId(`incorrect_${row.id}_${timeoutId}`)
+					);
+
+					message = await user.send({
+						content: row.sentence
+							? `${row.kanji}\n||${row.reading}||\n||${row.meanings}||\n||${row.sentence}||`
+							: `${row.kanji}\n||${row.reading}||\n||${row.meanings}||`,
+						components: [buttons],
+					});
 				});
 			});
 		}, interval * 60000)
 	);
 
-	interaction.reply({ content: `Started learning every ${interval} minutes using deck "${deck}".`, ephemeral: true });
+	interaction.reply({
+		content: `Started learning every ${interval} minutes using deck "${deck}".`,
+		flags: MessageFlags.Ephemeral,
+	});
 }
 
 module.exports = callback;
