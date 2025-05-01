@@ -1,6 +1,6 @@
 "use strict";
 
-const { MessageFlags } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const fs = require("fs");
 const axios = require("axios");
 const { saveCardsToJson } = require("../utils/anki_parser.js");
@@ -86,4 +86,11 @@ async function callback(interaction, deck) {
 	}
 }
 
-module.exports = callback;
+module.exports = {
+	data: new SlashCommandBuilder()
+		.setName("load")
+		.setDescription("Loads your anki's exported file in a deck.")
+		.addAttachmentOption((opt) => opt.setName("file").setDescription("The file to load").setRequired(true))
+		.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
+	callback,
+};

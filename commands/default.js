@@ -1,6 +1,6 @@
 "use strict";
 
-const { MessageFlags } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
 
 async function callback(interaction) {
@@ -43,4 +43,10 @@ async function callback(interaction) {
 	});
 }
 
-module.exports = callback;
+module.exports = {
+	data: new SlashCommandBuilder()
+		.setName("default")
+		.setDescription("Tells you what your default deck is, or changes your default deck if you provide one.")
+		.addStringOption((opt) => opt.setName("deck").setDescription("The default deck name").setRequired(false)),
+	callback,
+};

@@ -1,6 +1,6 @@
 "use strict";
 
-const { ActionRowBuilder } = require("discord.js");
+const { SlashCommandBuilder, ActionRowBuilder } = require("discord.js");
 const db = require("../database/decks.js");
 const { getCorrectButton } = require("../buttons/correct.js");
 const { getIncorrectButton } = require("../buttons/incorrect.js");
@@ -30,4 +30,10 @@ async function callback(interaction, deck) {
 	});
 }
 
-module.exports = callback;
+module.exports = {
+	data: new SlashCommandBuilder()
+		.setName("ask")
+		.setDescription("Quizzes you with a random card from a deck.")
+		.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
+	callback,
+};

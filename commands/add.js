@@ -1,6 +1,6 @@
 "use strict";
 
-const { MessageFlags } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
 
 async function callback(interaction, deck) {
@@ -17,4 +17,16 @@ async function callback(interaction, deck) {
 	});
 }
 
-module.exports = callback;
+module.exports = {
+	data: new SlashCommandBuilder()
+		.setName("add")
+		.setDescription("Adds a new card to a deck.")
+		.addStringOption((opt) => opt.setName("kanji").setDescription("The kanjis writing").setRequired(true))
+		.addStringOption((opt) => opt.setName("reading").setDescription("The kana writing").setRequired(true))
+		.addStringOption((opt) => opt.setName("meanings").setDescription("The meanings").setRequired(true))
+		.addStringOption((opt) =>
+			opt.setName("sentence").setDescription("The sentence it was found in").setRequired(false)
+		)
+		.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
+	callback,
+};
