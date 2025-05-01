@@ -108,17 +108,14 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 					.setName("remove")
 					.setDescription("Removes a card from a deck.")
 					.addStringOption((option) =>
-						option.setName("deck").setDescription("The deck name").setRequired(false)
+						option.setName("kanji").setDescription("The kanjis writing").setRequired(true)
 					)
 					.addStringOption((option) =>
-						option.setName("kanji").setDescription("The kanjis writing").setRequired(true)
+						option.setName("deck").setDescription("The deck name").setRequired(false)
 					),
 				new SlashCommandBuilder()
 					.setName("edit")
 					.setDescription("Edits a card from a deck.")
-					.addStringOption((option) =>
-						option.setName("deck").setDescription("The deck name").setRequired(false)
-					)
 					.addStringOption((option) =>
 						option.setName("kanji").setDescription("The kanjis writing").setRequired(true)
 					)
@@ -130,13 +127,16 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 					)
 					.addStringOption((option) =>
 						option.setName("sentence").setDescription("The sentence it was found in").setRequired(false)
+					)
+					.addStringOption((option) =>
+						option.setName("deck").setDescription("The deck name").setRequired(false)
 					),
 			].map((command) => command.toJSON()),
 		});
 
 		console.log("Slash commands online.");
 	} catch (err) {
-		console.error("rest.put", err);
+		console.error("rest.put", JSON.stringify(err, null, 4));
 	}
 })();
 
