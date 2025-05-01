@@ -57,10 +57,14 @@ async function callback(interaction, deck) {
 
 		await Promise.all([
 			fs.unlink(cardsPath, (err) => {
-				console.error("fs.unlink", err);
+				if (err) {
+					console.error("fs.unlink", err);
+				}
 			}),
 			fs.unlink(filename, (err) => {
-				console.error("fs.unlink", err);
+				if (err) {
+					console.error("fs.unlink", err);
+				}
 			}),
 		]);
 
