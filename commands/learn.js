@@ -23,6 +23,11 @@ async function callback(interaction, deck) {
 		return;
 	}
 
+	if (interval === 0) {
+		interaction.reply({ content: "Interval cannot be 0.", flags: MessageFlags.Ephemeral });
+		return;
+	}
+
 	if (!interval) {
 		interaction.reply({ content: "Interval is required unless stopping.", flags: MessageFlags.Ephemeral });
 		return;
