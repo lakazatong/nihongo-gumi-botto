@@ -84,7 +84,6 @@ async function callback(interaction) {
 					content: "No deck was given and no default deck was set.",
 					flags: MessageFlags.Ephemeral,
 				});
-				return;
 			}
 		});
 	}

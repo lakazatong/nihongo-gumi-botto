@@ -7,12 +7,11 @@ const decks_db = new sqlite3.Database("./database/decks.db", (err) => {
 		console.error("Error opening decks.db:", err.message);
 	} else {
 		decks_db.run(`
-            CREATE TABLE IF NOT EXISTS defaults (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id TEXT NOT NULL,
-                deck TEXT NOT NULL
-            )
-        `);
+			CREATE TABLE IF NOT EXISTS defaults (
+				user_id TEXT PRIMARY KEY,
+				deck TEXT NOT NULL
+			)
+		`);
 		decks_db.run(`
             CREATE TABLE IF NOT EXISTS owners (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +37,7 @@ function setOwner(userId, deck) {
 }
 
 function updateDefault(userId, deck) {
-	decks_db.run(`INSERT INTO defaults (user_id, deck) VALUES (?, ?)`, [userId, deck]);
+	decks_db.run(`INSERT OR REPLACE INTO defaults (user_id, deck) VALUES (?, ?)`, [userId, deck]);
 }
 
 function getDefaultDeck(userId, callback) {

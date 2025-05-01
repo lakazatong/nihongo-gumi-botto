@@ -5,17 +5,17 @@ const fs = require("fs");
 const axios = require("axios");
 const { saveCardsToJson } = require("../utils/anki_parser.js");
 const { kanjis_db } = require("../database/kanjis.js");
-const { getOwner, getDefaultDeck } = require("../database/decks.js");
+const { getOwner, setOwner, getDefaultDeck } = require("../database/decks.js");
 
 async function callback(interaction) {
 	const attachment = interaction.options.getAttachment("file");
 
-	await interaction.reply({
-		content: "Processing your file...",
-		flags: MessageFlags.Ephemeral,
-	});
-
 	async function help(deck) {
+		await interaction.reply({
+			content: "Processing your file...",
+			flags: MessageFlags.Ephemeral,
+		});
+
 		const fileUrl = attachment.url;
 		const filename = attachment.name;
 
@@ -80,7 +80,7 @@ async function callback(interaction) {
 		getOwner(deck, (err, owner_id) => {
 			if (err) {
 				console.error(err);
-				interaction.editReply({
+				interaction.reply({
 					content: "An error occurred while getting the deck owner.",
 					flags: MessageFlags.Ephemeral,
 				});
@@ -109,7 +109,7 @@ async function callback(interaction) {
 		getDefaultDeck(userId, (err, deck) => {
 			if (err) {
 				console.error(err);
-				interaction.editReply({
+				interaction.reply({
 					content: "An error occurred while fetching the default deck.",
 					flags: MessageFlags.Ephemeral,
 				});
@@ -118,11 +118,10 @@ async function callback(interaction) {
 			if (deck) {
 				help2(deck);
 			} else {
-				interaction.editReply({
+				interaction.reply({
 					content: "No deck was given and no default deck was set.",
 					flags: MessageFlags.Ephemeral,
 				});
-				return;
 			}
 		});
 	}
