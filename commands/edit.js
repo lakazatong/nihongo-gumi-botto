@@ -1,7 +1,7 @@
 "use strict";
 
 const { MessageFlags } = require("discord.js");
-const { db, getOwner, setOwner, getDefaultDeck } = require("../database/decks.js");
+const { db, getOwner, getDefaultDeck, getDeckEntryByKanji } = require("../database/decks.js");
 
 async function callback(interaction) {
 	const userId = interaction.user.id;
@@ -11,24 +11,7 @@ async function callback(interaction) {
 	const sentence = interaction.options.getString("sentence") || null;
 
 	function help(deck) {
-		db.get("SELECT * FROM decks WHERE deck = ? AND kanji = ?", [deck, kanji], (err, row) => {
-			if (err) {
-				console.error("db.get", err);
-				interaction.reply({
-					content: "An error occurred with sqlite.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-
-			if (!row) {
-				interaction.reply({
-					content: "This kanji does not exist in the deck.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-
+		getDeckEntryByKanji(interaction, deck, kanji, (row) => {
 			db.run(
 				"UPDATE decks SET reading = ?, meanings = ?, sentence = ? WHERE deck = ? AND kanji = ?",
 				[reading, meanings, sentence, deck, kanji],

@@ -39,16 +39,7 @@ async function callback(interaction) {
 	}
 
 	function help2(deck) {
-		getOwner(deck, (err, owner_id) => {
-			if (err) {
-				console.error("getOwner", err);
-				interaction.reply({
-					content: "An error occurred with sqlite.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-
+		getOwner(interaction, deck, (owner_id) => {
 			if (owner_id === null) {
 				setOwner(userId, deck);
 				help(deck);
@@ -88,6 +79,10 @@ async function callback(interaction) {
 		});
 	}
 }
+
+/*
+
+*/
 
 module.exports = {
 	callback,

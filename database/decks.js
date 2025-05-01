@@ -34,13 +34,17 @@ const db = new sqlite3.Database("./database/decks.db", (err) => {
 	}
 });
 
-function getOwner(deck, callback) {
+function getOwner(interaction, deck, callback) {
 	db.get(`SELECT * FROM owners WHERE deck = ?`, [deck], (err, row) => {
 		if (err) {
-			callback(err);
+			console.error("getOwner", err);
+			interaction.reply({
+				content: "An error occurred with sqlite.",
+				flags: MessageFlags.Ephemeral,
+			});
 			return;
 		}
-		callback(null, row?.user_id || null);
+		callback(row?.user_id || null);
 	});
 }
 
@@ -63,10 +67,88 @@ function getDefaultDeck(userId, callback) {
 	});
 }
 
+function getRandomDeckEntry(interaction, deck, callback) {
+	db.get("SELECT * FROM decks WHERE deck = ? ORDER BY RANDOM() LIMIT 1", [deck], (err, row) => {
+		if (err) {
+			console.error("getRandomDeckEntry", err);
+			interaction.reply({
+				content: "An error occurred with sqlite.",
+				flags: MessageFlags.Ephemeral,
+			});
+			return;
+		}
+		if (!row) {
+			interaction.reply({
+				content: "Empty deck.",
+				flags: MessageFlags.Ephemeral,
+			});
+			return;
+		}
+		callback(row);
+	});
+}
+
+function getDeckById(interaction, id, callback) {
+	db.get("SELECT * FROM decks WHERE id = ?", [id], (err, row) => {
+		if (err) {
+			console.error("getDeckById", err);
+			interaction.reply({
+				content: "An error occurred with sqlite.",
+				flags: MessageFlags.Ephemeral,
+			});
+			return;
+		}
+		callback(row);
+	});
+}
+
+function getDeckEntryByKanji(interaction, deck, kanji, callback) {
+	db.get("SELECT * FROM decks WHERE deck = ? AND kanji = ?", [deck, kanji], (err, row) => {
+		if (err) {
+			console.error("getDeckEntryByKanji", err);
+			interaction.reply({
+				content: "An error occurred with sqlite.",
+				flags: MessageFlags.Ephemeral,
+			});
+			return;
+		}
+		if (!row) {
+			interaction.reply({
+				content: `This kanji does not exist in the deck ${deck}.`,
+				flags: MessageFlags.Ephemeral,
+			});
+			return;
+		}
+		callback(row);
+	});
+}
+
+function getDeckStats(interaction, deck, callback) {
+	db.get(
+		"SELECT COUNT(*) as count, SUM(score) as total, AVG(score) as average FROM decks WHERE deck = ?",
+		[deck],
+		(err, row) => {
+			if (err) {
+				console.error("getDeckStats", err);
+				interaction.reply({
+					content: "An error occurred with sqlite.",
+					flags: MessageFlags.Ephemeral,
+				});
+				return;
+			}
+			callback(row);
+		}
+	);
+}
+
 module.exports = {
 	db,
 	getOwner,
 	setOwner,
 	updateDefault,
 	getDefaultDeck,
+	getRandomDeckEntry,
+	getDeckById,
+	getDeckEntryByKanji,
+	getDeckStats,
 };

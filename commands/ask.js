@@ -1,7 +1,7 @@
 "use strict";
 
 const { ActionRowBuilder, MessageFlags } = require("discord.js");
-const { db, getOwner, getDefaultDeck } = require("../database/decks.js");
+const { getOwner, getDefaultDeck, getRandomDeckEntry } = require("../database/decks.js");
 const { getCorrectButton } = require("../buttons/correct.js");
 const { getIncorrectButton } = require("../buttons/incorrect.js");
 
@@ -9,22 +9,7 @@ async function callback(interaction) {
 	const userId = interaction.user.id;
 
 	function help(deck) {
-		db.get("SELECT * FROM decks WHERE deck = ? ORDER BY RANDOM() LIMIT 1", [deck], (err, row) => {
-			if (err) {
-				console.error("db.get", err);
-				interaction.reply({
-					content: "An error occurred with sqlite.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-			if (!row) {
-				interaction.reply({
-					content: "Empty deck.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
+		getRandomDeckEntry(interaction, deck, (row) => {
 			const buttons = new ActionRowBuilder().addComponents(
 				getCorrectButton().setCustomId(`correct_${row.id}`),
 				getIncorrectButton().setCustomId(`incorrect_${row.id}`)

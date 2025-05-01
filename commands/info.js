@@ -7,27 +7,13 @@ async function callback(interaction) {
 	const userId = interaction.user.id;
 
 	function help(deck) {
-		db.get(
-			`SELECT COUNT(*) as count, SUM(score) as total, AVG(score) as average FROM decks WHERE deck = ?`,
-			[deck],
-			(err, row) => {
-				if (err) {
-					console.error("db.get", err);
-					interaction.reply({
-						content: "An error occurred with sqlite.",
-						flags: MessageFlags.Ephemeral,
-					});
-					return;
-				}
-
-				interaction.reply({
-					content: `Deck: ${deck}\nCards: ${row.count}\nTotal Score: ${row.total || 0}\nAverage Score: ${
-						row.average?.toFixed(2) || 0
-					}`,
-					flags: MessageFlags.Ephemeral,
-				});
-			}
-		);
+		getDeckStats(interaction, deck, (row) => {
+			interaction.reply({
+				content: `Deck: ${deck}\nCards: ${row.count}\nTotal Score: ${row.total || 0}\nAverage Score: ${
+					row.average?.toFixed(2) || 0
+				}`,
+			});
+		});
 	}
 
 	function help2(deck) {
