@@ -1,33 +1,36 @@
 "use strict";
 
 const { MessageFlags } = require("discord.js");
-const { db, getDefaultDeck, getOwner } = require("../database/decks.js");
+const { db, getOwner, getDefaultDeck } = require("../database/decks.js");
 
 async function callback(interaction) {
 	const userId = interaction.user.id;
+	const kanji = interaction.options.getString("kanji");
 
 	function help(deck) {
-		db.get(
-			`SELECT COUNT(*) as count, SUM(score) as total, AVG(score) as average FROM decks WHERE deck = ?`,
-			[deck],
-			(err, row) => {
-				if (err) {
-					console.error("db.get", err);
-					interaction.reply({
-						content: "An error occurred with sqlite.",
-						flags: MessageFlags.Ephemeral,
-					});
-					return;
-				}
-
+		db.run("DELETE FROM decks WHERE deck = ? AND kanji = ?", [deck, kanji], function (err) {
+			if (err) {
+				console.error("db.run", err);
 				interaction.reply({
-					content: `Deck: ${deck}\nCards: ${row.count}\nTotal Score: ${row.total || 0}\nAverage Score: ${
-						row.average?.toFixed(2) || 0
-					}`,
+					content: "An error occurred with sqlite.",
 					flags: MessageFlags.Ephemeral,
 				});
+				return;
 			}
-		);
+
+			if (this.changes === 0) {
+				interaction.reply({
+					content: "No matching kanji found in the specified deck.",
+					flags: MessageFlags.Ephemeral,
+				});
+				return;
+			}
+
+			interaction.reply({
+				content: `"${kanji}" removed from deck "${deck}".`,
+				flags: MessageFlags.Ephemeral,
+			});
+		});
 	}
 
 	function help2(deck) {

@@ -7,6 +7,7 @@ const { saveCardsToJson } = require("../utils/anki_parser.js");
 const { db, getOwner, setOwner, getDefaultDeck } = require("../database/decks.js");
 
 async function callback(interaction) {
+	const userId = interaction.user.id;
 	const attachment = interaction.options.getAttachment("file");
 
 	async function help(deck) {
@@ -115,7 +116,6 @@ async function callback(interaction) {
 		});
 	}
 
-	const userId = interaction.user.id;
 	const deck = interaction.options.getString("deck") || null;
 
 	if (deck) {

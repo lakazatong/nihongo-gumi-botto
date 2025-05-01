@@ -4,6 +4,7 @@ const { MessageFlags } = require("discord.js");
 const { db, getOwner, setOwner, getDefaultDeck } = require("../database/decks.js");
 
 async function callback(interaction) {
+	const userId = interaction.user.id;
 	const kanji = interaction.options.getString("kanji");
 	const reading = interaction.options.getString("reading");
 	const meanings = interaction.options.getString("meanings");
@@ -62,7 +63,6 @@ async function callback(interaction) {
 		});
 	}
 
-	const userId = interaction.user.id;
 	const deck = interaction.options.getString("deck") || null;
 
 	if (deck) {

@@ -1,33 +1,53 @@
 "use strict";
 
 const { MessageFlags } = require("discord.js");
-const { db, getDefaultDeck, getOwner } = require("../database/decks.js");
+const { db, getOwner, setOwner, getDefaultDeck } = require("../database/decks.js");
 
 async function callback(interaction) {
 	const userId = interaction.user.id;
+	const kanji = interaction.options.getString("kanji");
+	const reading = interaction.options.getString("reading");
+	const meanings = interaction.options.getString("meanings");
+	const sentence = interaction.options.getString("sentence") || null;
 
 	function help(deck) {
-		db.get(
-			`SELECT COUNT(*) as count, SUM(score) as total, AVG(score) as average FROM decks WHERE deck = ?`,
-			[deck],
-			(err, row) => {
-				if (err) {
-					console.error("db.get", err);
-					interaction.reply({
-						content: "An error occurred with sqlite.",
-						flags: MessageFlags.Ephemeral,
-					});
-					return;
-				}
-
+		db.get("SELECT * FROM decks WHERE deck = ? AND kanji = ?", [deck, kanji], (err, row) => {
+			if (err) {
+				console.error("db.get", err);
 				interaction.reply({
-					content: `Deck: ${deck}\nCards: ${row.count}\nTotal Score: ${row.total || 0}\nAverage Score: ${
-						row.average?.toFixed(2) || 0
-					}`,
+					content: "An error occurred with sqlite.",
 					flags: MessageFlags.Ephemeral,
 				});
+				return;
 			}
-		);
+
+			if (!row) {
+				interaction.reply({
+					content: "This kanji does not exist in the deck.",
+					flags: MessageFlags.Ephemeral,
+				});
+				return;
+			}
+
+			db.run(
+				"UPDATE decks SET reading = ?, meanings = ?, sentence = ? WHERE deck = ? AND kanji = ?",
+				[reading, meanings, sentence, deck, kanji],
+				async (err) => {
+					if (err) {
+						console.error("db.run", err);
+						await interaction.reply({
+							content: "An error occurred with sqlite.",
+							flags: MessageFlags.Ephemeral,
+						});
+					} else {
+						await interaction.reply({
+							content: "Kanji updated successfully!",
+							flags: MessageFlags.Ephemeral,
+						});
+					}
+				}
+			);
+		});
 	}
 
 	function help2(deck) {

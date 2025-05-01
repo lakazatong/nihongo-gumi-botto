@@ -4,6 +4,8 @@ const { MessageFlags } = require("discord.js");
 const { db, getOwner, getDefaultDeck } = require("../database/decks.js");
 
 async function callback(interaction) {
+	const userId = interaction.user.id;
+
 	function help(deck) {
 		db.run("DELETE FROM decks WHERE deck = ?", [deck], async (err) => {
 			if (err) {
@@ -48,7 +50,6 @@ async function callback(interaction) {
 		});
 	}
 
-	const userId = interaction.user.id;
 	const deck = interaction.options.getString("deck") || null;
 
 	if (deck) {

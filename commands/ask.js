@@ -6,6 +6,8 @@ const { getCorrectButton } = require("../buttons/correct.js");
 const { getIncorrectButton } = require("../buttons/incorrect.js");
 
 async function callback(interaction) {
+	const userId = interaction.user.id;
+
 	function help(deck) {
 		db.get("SELECT * FROM decks WHERE deck = ? ORDER BY RANDOM() LIMIT 1", [deck], (err, row) => {
 			if (err) {
@@ -73,7 +75,6 @@ async function callback(interaction) {
 		});
 	}
 
-	const userId = interaction.user.id;
 	const deck = interaction.options.getString("deck") || null;
 
 	if (deck) {
