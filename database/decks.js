@@ -33,16 +33,12 @@ function getOwner(deck, callback) {
 	});
 }
 
-function updateDefault(userId, deck) {
-	decks_db.run(
-		`INSERT INTO defaults (user_id, deck) VALUES (?, ?)
-		ON CONFLICT(user_id) DO UPDATE SET deck = excluded.deck`,
-		[userId, deck]
-	);
-}
-
 function setOwner(userId, deck) {
 	decks_db.run(`INSERT INTO owners (user_id, deck) VALUES (?, ?)`, [userId, deck]);
+}
+
+function updateDefault(userId, deck) {
+	decks_db.run(`INSERT INTO defaults (user_id, deck) VALUES (?, ?)`, [userId, deck]);
 }
 
 function getDefaultDeck(userId, callback) {
@@ -52,7 +48,7 @@ function getDefaultDeck(userId, callback) {
 			return;
 		}
 
-		callback(null, row?.deck);
+		callback(null, row?.deck || null);
 	});
 }
 

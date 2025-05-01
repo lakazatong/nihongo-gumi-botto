@@ -78,7 +78,7 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 					),
 				new SlashCommandBuilder()
 					.setName("load")
-					.setDescription("Loads your anki's exported file in the a.")
+					.setDescription("Loads your anki's exported file in the a Deck.")
 					.addAttachmentOption((option) =>
 						option.setName("file").setDescription("The file to load").setRequired(true)
 					)

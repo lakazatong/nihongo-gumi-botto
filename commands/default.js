@@ -1,5 +1,6 @@
 "use strict";
 
+const { MessageFlags } = require("discord.js");
 const { getOwner, updateDefault } = require("../database/decks.js");
 
 async function callback(interaction) {
@@ -15,7 +16,7 @@ async function callback(interaction) {
 			return;
 		}
 
-		if (owner_id !== userId) {
+		if (owner_id !== null && owner_id !== userId) {
 			interaction.reply({
 				content: "You are not the owner of this deck.",
 				flags: MessageFlags.Ephemeral,

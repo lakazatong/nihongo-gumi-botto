@@ -20,7 +20,9 @@ async function callback(interaction) {
 			}
 			const button = new ActionRowBuilder().addComponents(getIncorrectButton().setDisabled(true));
 			await interaction.update({
-				content: `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.sentence}`,
+				content: row.sentence
+					? `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.sentence}`
+					: `${row.kanji}\n${row.reading}\n${row.meanings}`,
 				components: [button],
 			});
 		});
