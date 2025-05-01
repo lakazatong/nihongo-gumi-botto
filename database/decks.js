@@ -176,14 +176,38 @@ class DecksDatabase {
 	}
 
 	updateCard(interaction, deck, kanji, reading, meanings, sentence, callback) {
-		this.db.run(
-			"UPDATE decks SET reading = ?, meanings = ?, sentence = ? WHERE deck = ? AND kanji = ?",
-			[reading, meanings, sentence, deck, kanji],
-			(err) => {
-				if (this.#handleRunError(interaction, err)) return;
-				callback?.(this);
-			}
-		);
+		const fields = [];
+		const values = [];
+
+		if (reading) {
+			fields.push("reading = ?");
+			values.push(reading);
+		}
+		if (meanings) {
+			fields.push("meanings = ?");
+			values.push(meanings);
+		}
+		if (sentence) {
+			fields.push("sentence = ?");
+			values.push(sentence);
+		}
+
+		if (fields.length === 0) {
+			interaction.reply({
+				content: "No values provided to update.",
+				flags: MessageFlags.Ephemeral,
+			});
+			return;
+		}
+
+		values.push(deck, kanji);
+
+		const sql = `UPDATE decks SET ${fields.join(", ")} WHERE deck = ? AND kanji = ?`;
+
+		this.db.run(sql, values, (err) => {
+			if (this.#handleRunError(interaction, err)) return;
+			callback?.(this);
+		});
 	}
 
 	deleteCard(interaction, deck, kanji, callback) {

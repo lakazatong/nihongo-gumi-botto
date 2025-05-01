@@ -12,10 +12,32 @@ function getKey(id, deck) {
 }
 
 function startSession(deck, interval, user, resume) {
-	sessions.set(getKey(user.id, deck), [
-		interval,
-		setInterval(() => {
-			db.db.get(`SELECT * FROM owners WHERE deck = ?`, [deck], (err, row) => {
+	function ask() {
+		db.db.get(`SELECT * FROM owners WHERE deck = ?`, [deck], (err, row) => {
+			if (err) {
+				console.error("get", err);
+				user.send({
+					content: "Session: An error occurred with sqlite.",
+					flags: MessageFlags.Ephemeral,
+				});
+				return;
+			}
+			const owner_id = row?.user_id || null;
+			if (owner_id === null) {
+				user.send({
+					content: "Session: The deck does not exist anymore.",
+					flags: MessageFlags.Ephemeral,
+				});
+				return;
+			}
+			if (owner_id !== user.id) {
+				user.send({
+					content: "Session: You are not the owner of this deck anymore.",
+					flags: MessageFlags.Ephemeral,
+				});
+				return;
+			}
+			db.db.get("SELECT * FROM decks WHERE deck = ? ORDER BY RANDOM() LIMIT 1", [deck], async (err, row) => {
 				if (err) {
 					console.error("get", err);
 					user.send({
@@ -24,65 +46,42 @@ function startSession(deck, interval, user, resume) {
 					});
 					return;
 				}
-				const owner_id = row?.user_id || null;
-				if (owner_id === null) {
+
+				if (!row) {
 					user.send({
-						content: "Session: The deck does not exist anymore.",
+						content: "Session: Empty deck.",
 						flags: MessageFlags.Ephemeral,
 					});
 					return;
 				}
-				if (owner_id !== user.id) {
-					user.send({
-						content: "Session: You are not the owner of this deck anymore.",
-						flags: MessageFlags.Ephemeral,
-					});
-					return;
-				}
-				db.db.get("SELECT * FROM decks WHERE deck = ? ORDER BY RANDOM() LIMIT 1", [deck], async (err, row) => {
-					if (err) {
-						console.error("get", err);
-						user.send({
-							content: "Session: An error occurred with sqlite.",
-							flags: MessageFlags.Ephemeral,
-						});
-						return;
-					}
 
-					if (!row) {
-						user.send({
-							content: "Session: Empty deck.",
-							flags: MessageFlags.Ephemeral,
-						});
-						return;
-					}
+				let message;
 
-					let message;
-
-					const timeoutId = setTimeout(() => {
-						message.edit({
-							content: row.sentence
-								? `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.sentence}`
-								: `${row.kanji}\n${row.reading}\n${row.meanings}`,
-							components: [],
-						});
-					}, 30000);
-
-					const buttons = new ActionRowBuilder().addComponents(
-						getCorrectButton().setCustomId(`correct_${row.id}_${timeoutId}`),
-						getIncorrectButton().setCustomId(`incorrect_${row.id}_${timeoutId}`)
-					);
-
-					message = await user.send({
+				const timeoutId = setTimeout(() => {
+					message.edit({
 						content: row.sentence
-							? `${row.kanji}\n||${row.reading}||\n||${row.meanings}||\n||${row.sentence}||`
-							: `${row.kanji}\n||${row.reading}||\n||${row.meanings}||`,
-						components: [buttons],
+							? `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.sentence}`
+							: `${row.kanji}\n${row.reading}\n${row.meanings}`,
+						components: [],
 					});
+				}, 30000);
+
+				const buttons = new ActionRowBuilder().addComponents(
+					getCorrectButton().setCustomId(`correct_${row.id}_${timeoutId}`),
+					getIncorrectButton().setCustomId(`incorrect_${row.id}_${timeoutId}`)
+				);
+
+				message = await user.send({
+					content: row.sentence
+						? `${row.kanji}\n||${row.reading}||\n||${row.meanings}||\n||${row.sentence}||`
+						: `${row.kanji}\n||${row.reading}||\n||${row.meanings}||`,
+					components: [buttons],
 				});
 			});
-		}, interval * 60000),
-	]);
+		});
+	}
+
+	sessions.set(getKey(user.id, deck), [interval, setInterval(ask, interval * 60000)]);
 
 	if (resume) {
 		user.send({
@@ -90,6 +89,8 @@ function startSession(deck, interval, user, resume) {
 			flags: MessageFlags.Ephemeral,
 		});
 	}
+
+	ask();
 }
 
 async function callback(interaction, deck) {
@@ -103,9 +104,15 @@ async function callback(interaction, deck) {
 			const [_, intervalId] = sessions.get(getKey(userId, deck));
 			clearInterval(intervalId);
 			sessions.delete(getKey(userId, deck));
-			interaction.reply({ content: "Stopped your learning session.", flags: MessageFlags.Ephemeral });
+			interaction.reply({
+				content: `Stopped your learning session for the deck ${deck}.`,
+				flags: MessageFlags.Ephemeral,
+			});
 		} else {
-			interaction.reply({ content: "No active learning session to stop.", flags: MessageFlags.Ephemeral });
+			interaction.reply({
+				content: `No active learning session to stop for the deck ${deck}.`,
+				flags: MessageFlags.Ephemeral,
+			});
 		}
 		return;
 	}
