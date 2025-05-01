@@ -1,31 +1,24 @@
 "use strict";
 
 const { MessageFlags } = require("discord.js");
-const { db, getDefaultDeck, getOwner } = require("../database/decks.js");
+const { db, getOwner, getDefaultDeck } = require("../database/decks.js");
 
 async function callback(interaction) {
 	function help(deck) {
-		db.get(
-			`SELECT COUNT(*) as count, SUM(score) as total, AVG(score) as average FROM decks WHERE deck = ?`,
-			[deck],
-			(err, row) => {
-				if (err) {
-					console.error("db.get", err);
-					interaction.reply({
-						content: "An error occurred with sqlite.",
-						flags: MessageFlags.Ephemeral,
-					});
-					return;
-				}
-
-				interaction.reply({
-					content: `Deck: ${deck}\nCards: ${row.count}\nTotal Score: ${row.total || 0}\nAverage Score: ${
-						row.average?.toFixed(2) || 0
-					}`,
+		db.run("DELETE FROM decks WHERE deck = ?", [deck], async (err) => {
+			if (err) {
+				console.error("db.run", err);
+				await interaction.reply({
+					content: "An error occurred with sqlite.",
+					flags: MessageFlags.Ephemeral,
+				});
+			} else {
+				await interaction.reply({
+					content: "Deck cleared successfully!",
 					flags: MessageFlags.Ephemeral,
 				});
 			}
-		);
+		});
 	}
 
 	function help2(deck) {

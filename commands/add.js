@@ -23,7 +23,7 @@ async function callback(interaction) {
 					} else {
 						console.error("db.run", err);
 						await interaction.reply({
-							content: "An error occurred while saving the card.",
+							content: "An error occurred with sqlite.",
 							flags: MessageFlags.Ephemeral,
 						});
 					}
@@ -42,7 +42,7 @@ async function callback(interaction) {
 			if (err) {
 				console.error("getOwner", err);
 				interaction.reply({
-					content: "An error occurred while getting the deck owner.",
+					content: "An error occurred with sqlite.",
 					flags: MessageFlags.Ephemeral,
 				});
 				return;
@@ -64,6 +64,7 @@ async function callback(interaction) {
 
 	const userId = interaction.user.id;
 	const deck = interaction.options.getString("deck") || null;
+
 	if (deck) {
 		help2(deck);
 	} else {
@@ -71,7 +72,7 @@ async function callback(interaction) {
 			if (err) {
 				console.error("getDefaultDeck", err);
 				interaction.reply({
-					content: "An error occurred while fetching the default deck.",
+					content: "An error occurred with sqlite.",
 					flags: MessageFlags.Ephemeral,
 				});
 				return;

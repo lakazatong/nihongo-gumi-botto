@@ -32,13 +32,14 @@ async function callback(interaction) {
 
 			const cardsPath = saveCardsToJson(filename);
 			if (!cardsPath) {
-				await interaction.editReply({
+				interaction.editReply({
 					content: "An error occurred while parsing the file.",
 					flags: MessageFlags.Ephemeral,
 				});
 				return;
 			}
 			const fileContent = fs.readFileSync(cardsPath, "utf-8");
+			const errorKanji = [];
 
 			JSON.parse(fileContent).forEach(({ kanji, reading, meanings, sentence }) => {
 				const formattedMeanings = Object.entries(meanings)
@@ -54,7 +55,10 @@ async function callback(interaction) {
 							 sentence = excluded.sentence`,
 					[deck, kanji, reading, formattedMeanings, sentence || null],
 					(err) => {
-						if (err) console.error("db.run", err);
+						if (err) {
+							console.error("db.run", err);
+							errorKanji.push(kanji);
+						}
 					}
 				);
 			});
@@ -68,12 +72,18 @@ async function callback(interaction) {
 				}),
 			]);
 
-			await interaction.editReply({
-				content: `All kanjis of ${filename} were successfully loaded into the deck ${deck}!`,
-			});
+			if (errorKanji.length > 0) {
+				interaction.editReply({
+					content: `The following kanjis failed to be added to the deck ${deck}:\n${errorKanji.join(", ")}`,
+				});
+			} else {
+				interaction.editReply({
+					content: `All kanjis of ${filename} were successfully loaded into the deck ${deck}!`,
+				});
+			}
 		} catch (err) {
 			console.error("load", err);
-			await interaction.editReply({
+			interaction.editReply({
 				content: "An error occurred while getting the file.",
 				flags: MessageFlags.Ephemeral,
 			});
@@ -85,7 +95,7 @@ async function callback(interaction) {
 			if (err) {
 				console.error("getOwner", err);
 				interaction.reply({
-					content: "An error occurred while getting the deck owner.",
+					content: "An error occurred with sqlite.",
 					flags: MessageFlags.Ephemeral,
 				});
 				return;
@@ -107,6 +117,7 @@ async function callback(interaction) {
 
 	const userId = interaction.user.id;
 	const deck = interaction.options.getString("deck") || null;
+
 	if (deck) {
 		help2(deck);
 	} else {
@@ -114,7 +125,7 @@ async function callback(interaction) {
 			if (err) {
 				console.error("getDefaultDeck", err);
 				interaction.reply({
-					content: "An error occurred while fetching the default deck.",
+					content: "An error occurred with sqlite.",
 					flags: MessageFlags.Ephemeral,
 				});
 				return;

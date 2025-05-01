@@ -92,6 +92,18 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 					.addStringOption((option) =>
 						option.setName("deck").setDescription("The default deck name").setRequired(false)
 					),
+				new SlashCommandBuilder()
+					.setName("info")
+					.setDescription("Shows informations about a deck.")
+					.addStringOption((option) =>
+						option.setName("deck").setDescription("The deck name").setRequired(false)
+					),
+				new SlashCommandBuilder()
+					.setName("clear")
+					.setDescription("Clears all cards from a deck.")
+					.addStringOption((option) =>
+						option.setName("deck").setDescription("The deck name").setRequired(false)
+					),
 			].map((command) => command.toJSON()),
 		});
 
