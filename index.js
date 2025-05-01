@@ -1,7 +1,6 @@
 "use strict";
 
 const fs = require("fs");
-const path = require("path");
 
 const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, Partials } = require("discord.js");
 const { checkDeckOwnership, checkOrCreateDeckOwnership } = require("./utils/deck.js");
@@ -55,7 +54,7 @@ const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 		body: fs
 			.readdirSync("./commands")
 			.filter((file) => file.endsWith(".js"))
-			.map((file) => require(path.join(__dirname, "commands", file)).data.toJSON()),
+			.map((file) => require(`./commands/${file}`).data.toJSON()),
 	});
 
 	console.log("Slash commands online.");
