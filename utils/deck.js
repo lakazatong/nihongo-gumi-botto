@@ -44,7 +44,7 @@ function checkOrCreateDeckOwnership(interaction, callback) {
 	function help2(deck) {
 		db.getOwner(interaction, deck, (owner_id) => {
 			if (owner_id === null) {
-				db.setOwner(interaction, interaction.user.id, deck);
+				db.addOwner(interaction, interaction.user.id, deck);
 				callback(deck);
 			} else if (owner_id === interaction.user.id) {
 				callback(deck);

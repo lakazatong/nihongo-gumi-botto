@@ -129,7 +129,7 @@ class DecksDatabase {
 		return false;
 	}
 
-	setOwner(interaction, userId, deck, callback) {
+	addOwner(interaction, userId, deck, callback) {
 		this.db.run(`INSERT INTO owners (user_id, deck) VALUES (?, ?)`, [userId, deck], (err) => {
 			if (this.#handleRunError(interaction, err)) return;
 			callback?.(this);
