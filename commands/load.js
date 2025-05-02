@@ -40,33 +40,38 @@ async function callback(interaction, deck) {
 		const fileContent = fs.readFileSync(cardsPath, "utf-8");
 		const errorKanji = [];
 
-		JSON.parse(fileContent).forEach(({ kanji, reading, meanings, sentence }) => {
-			const formattedMeanings = Object.entries(meanings)
-				.map(([category, values]) => `${category}:\n- ${values.join("\n- ")}`)
-				.join("\n\n");
-
+		JSON.parse(fileContent).forEach(({ kanji, reading, meanings, forms, example }) => {
 			db.db.run(
-				`INSERT OR REPLACE INTO decks (deck, kanji, reading, meanings, sentence)
-						 VALUES (?, ?, ?, ?, ?)`,
-				[deck, kanji, reading, formattedMeanings, sentence || null],
+				`INSERT OR REPLACE INTO decks (deck, kanji, reading, meanings, forms, example)
+						 VALUES (?, ?, ?, ?, ?, ?)`,
+				[
+					deck,
+					kanji,
+					reading,
+					Object.entries(meanings)
+						.map(([category, values]) => `${category}:${values.join(",")}`)
+						.join(";"),
+					forms.join(","),
+					example,
+				],
 				(err) => {
 					errorKanji.push(kanji);
 				}
 			);
 		});
 
-		await Promise.all([
-			fs.unlink(cardsPath, (err) => {
-				if (err) {
-					console.error("fs.unlink", err);
-				}
-			}),
-			fs.unlink(filename, (err) => {
-				if (err) {
-					console.error("fs.unlink", err);
-				}
-			}),
-		]);
+		// await Promise.all([
+		// 	fs.unlink(cardsPath, (err) => {
+		// 		if (err) {
+		// 			console.error("fs.unlink", err);
+		// 		}
+		// 	}),
+		// 	fs.unlink(filename, (err) => {
+		// 		if (err) {
+		// 			console.error("fs.unlink", err);
+		// 		}
+		// 	}),
+		// ]);
 
 		if (errorKanji.length > 0) {
 			interaction.editReply({

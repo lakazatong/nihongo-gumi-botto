@@ -75,7 +75,37 @@ function checkOrCreateDeckOwnership(interaction, callback) {
 	}
 }
 
+function buildContent(row) {
+	const lines = [`${row.kanji}`, `## Reading\n||${row.reading}||`];
+
+	const formattedMeanings = row.meanings
+		.split(";")
+		.map((entry) => {
+			const [category, values] = entry.split(":");
+			const items = values
+				.split(",")
+				.map((v) => `- ${v}`)
+				.join("\n");
+			return `${category}:\n${items}`;
+		})
+		.join("\n\n");
+	lines.push(`## Meanings\n||${formattedMeanings}||`);
+
+	if (row.forms) {
+		const forms = row.forms
+			.split(",")
+			.map((f) => `- ${f}`)
+			.join("\n");
+		lines.push(`## Forms\n||${forms}||`);
+	}
+
+	if (row.example) lines.push(`## Example\n||${row.example}||`);
+
+	return lines.join("\n");
+}
+
 module.exports = {
 	checkDeckOwnership,
 	checkOrCreateDeckOwnership,
+	buildContent,
 };

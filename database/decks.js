@@ -16,7 +16,8 @@ class DecksDatabase {
                         kanji TEXT NOT NULL,
                         reading TEXT NOT NULL,
                         meanings TEXT NOT NULL,
-                        sentence TEXT,
+						forms TEXT,
+                        example TEXT,
                         score INTEGER DEFAULT 0,
                         UNIQUE (deck, kanji)
                     )
@@ -143,10 +144,10 @@ class DecksDatabase {
 		});
 	}
 
-	addCard(interaction, deck, kanji, reading, meanings, sentence, callback) {
+	addCard(interaction, deck, kanji, reading, meanings, forms, example, callback) {
 		this.db.run(
-			"INSERT INTO decks (deck, kanji, reading, meanings, sentence) VALUES (?, ?, ?, ?, ?)",
-			[deck, kanji, reading, meanings, sentence],
+			"INSERT INTO decks (deck, kanji, reading, meanings, forms, example) VALUES (?, ?, ?, ?, ?, ?)",
+			[deck, kanji, reading, meanings, forms, example],
 			(err) => {
 				if (err) {
 					if (err.code === "SQLITE_CONSTRAINT") {
@@ -175,7 +176,7 @@ class DecksDatabase {
 		});
 	}
 
-	updateCard(interaction, deck, kanji, reading, meanings, sentence, callback) {
+	updateCard(interaction, deck, kanji, reading, meanings, forms, example, callback) {
 		const fields = [];
 		const values = [];
 
@@ -187,9 +188,13 @@ class DecksDatabase {
 			fields.push("meanings = ?");
 			values.push(meanings);
 		}
-		if (sentence) {
-			fields.push("sentence = ?");
-			values.push(sentence);
+		if (forms) {
+			fields.push("forms = ?");
+			values.push(forms);
+		}
+		if (example) {
+			fields.push("example = ?");
+			values.push(example);
 		}
 
 		if (fields.length === 0) {

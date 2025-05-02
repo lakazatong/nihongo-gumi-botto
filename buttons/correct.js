@@ -12,8 +12,8 @@ async function callback(interaction) {
 		db.updateScoreById(interaction, id, row.score + 1, async (response) => {
 			const button = new ActionRowBuilder().addComponents(getCorrectButton().setDisabled(true));
 			await interaction.update({
-				content: row.sentence
-					? `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.sentence}`
+				content: row.example
+					? `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.example}`
 					: `${row.kanji}\n${row.reading}\n${row.meanings}`,
 				components: [button],
 			});

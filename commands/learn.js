@@ -4,6 +4,7 @@ const { SlashCommandBuilder, MessageFlags, ActionRowBuilder } = require("discord
 const db = require("../database/decks.js");
 const { getCorrectButton } = require("../buttons/correct.js");
 const { getIncorrectButton } = require("../buttons/incorrect.js");
+const { buildContent } = require("../utils/deck.js");
 
 const sessions = new Map();
 
@@ -59,9 +60,7 @@ function startSession(deck, interval, user, resume) {
 
 				const timeoutId = setTimeout(() => {
 					message.edit({
-						content: row.sentence
-							? `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.sentence}`
-							: `${row.kanji}\n${row.reading}\n${row.meanings}`,
+						content: buildContent(row),
 						components: [],
 					});
 				}, 30000);
@@ -72,9 +71,7 @@ function startSession(deck, interval, user, resume) {
 				);
 
 				message = await user.send({
-					content: row.sentence
-						? `${row.kanji}\n||${row.reading}||\n||${row.meanings}||\n||${row.sentence}||`
-						: `${row.kanji}\n||${row.reading}||\n||${row.meanings}||`,
+					content: buildContent(row),
 					components: [buttons],
 				});
 			});

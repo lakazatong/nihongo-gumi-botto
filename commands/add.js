@@ -7,9 +7,10 @@ async function callback(interaction, deck) {
 	const kanji = interaction.options.getString("kanji");
 	const reading = interaction.options.getString("reading");
 	const meanings = interaction.options.getString("meanings");
-	const sentence = interaction.options.getString("sentence") || null;
+	const forms = interaction.options.getString("forms") || null;
+	const example = interaction.options.getString("example") || null;
 
-	db.addCard(interaction, deck, kanji, reading, meanings, sentence, (response) => {
+	db.addCard(interaction, deck, kanji, reading, meanings, forms, example, (response) => {
 		interaction.reply({
 			content: "Kanji added successfully!",
 			flags: MessageFlags.Ephemeral,
@@ -24,8 +25,9 @@ module.exports = {
 		.addStringOption((opt) => opt.setName("kanji").setDescription("The kanjis writing").setRequired(true))
 		.addStringOption((opt) => opt.setName("reading").setDescription("The kana writing").setRequired(true))
 		.addStringOption((opt) => opt.setName("meanings").setDescription("The meanings").setRequired(true))
+		.addStringOption((opt) => opt.setName("forms").setDescription("Alternative forms").setRequired(false))
 		.addStringOption((opt) =>
-			opt.setName("sentence").setDescription("The sentence it was found in").setRequired(false)
+			opt.setName("example").setDescription("An example sentence it's used in").setRequired(false)
 		)
 		.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
 	callback,

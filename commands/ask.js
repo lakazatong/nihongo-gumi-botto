@@ -4,14 +4,13 @@ const { SlashCommandBuilder, ActionRowBuilder } = require("discord.js");
 const db = require("../database/decks.js");
 const { getCorrectButton } = require("../buttons/correct.js");
 const { getIncorrectButton } = require("../buttons/incorrect.js");
+const { buildContent } = require("../utils/deck.js");
 
 async function callback(interaction, deck) {
 	db.getRandomCard(interaction, deck, (row) => {
 		const timeoutId = setTimeout(async () => {
-			interaction.editReply({
-				content: row.sentence
-					? `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.sentence}`
-					: `${row.kanji}\n${row.reading}\n${row.meanings}`,
+			interaction.reply({
+				content: buildContent(row),
 				components: [],
 			});
 		}, 30000);
@@ -22,9 +21,7 @@ async function callback(interaction, deck) {
 		);
 
 		interaction.reply({
-			content: row.sentence
-				? `${row.kanji}\n||${row.reading}||\n||${row.meanings}||\n||${row.sentence}||`
-				: `${row.kanji}\n||${row.reading}||\n||${row.meanings}||`,
+			content: buildContent(row),
 			components: [buttons],
 		});
 	});
