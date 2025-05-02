@@ -51,8 +51,8 @@ async function callback(interaction, deck) {
 					Object.entries(meanings)
 						.map(([category, values]) => `${category}:${values.join(",")}`)
 						.join(";"),
-					forms.join(","),
-					example,
+					forms.join(",") || null,
+					example || null,
 				],
 				(err) => {
 					errorKanji.push(kanji);

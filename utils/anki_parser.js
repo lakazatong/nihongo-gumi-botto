@@ -72,14 +72,14 @@ function parseAnkiExport(path) {
 		}
 
 		const exampleDiv = front.querySelector('div[class="frontbg"] > div:nth-child(3)');
-		const example = exampleDiv ? exampleDiv.textContent.trim() : null;
+		const example = exampleDiv ? exampleDiv.textContent.trim() : "";
 
 		const formsLi = back.querySelector('li[data-sc-content="forms"]');
 		const forms = formsLi
 			? Array.from(formsLi.querySelectorAll("table tr:first-child th"))
 					.slice(1)
 					.map((th) => th.textContent.trim())
-			: null;
+			: [];
 
 		parsedCards.push({
 			kanji,
@@ -103,6 +103,8 @@ function saveCardsToJson(file) {
 		return null;
 	}
 }
+
+saveCardsToJson("./Default.txt");
 
 module.exports = {
 	saveCardsToJson,

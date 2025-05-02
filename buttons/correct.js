@@ -2,6 +2,7 @@
 
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const db = require("../database/decks.js");
+const { buildContent } = require("../utils/deck.js");
 
 const getCorrectButton = () => new ButtonBuilder().setCustomId("correct").setLabel("✅").setStyle(ButtonStyle.Success);
 
@@ -12,9 +13,7 @@ async function callback(interaction) {
 		db.updateScoreById(interaction, id, row.score + 1, async (response) => {
 			const button = new ActionRowBuilder().addComponents(getCorrectButton().setDisabled(true));
 			await interaction.update({
-				content: row.example
-					? `${row.kanji}\n${row.reading}\n${row.meanings}\n${row.example}`
-					: `${row.kanji}\n${row.reading}\n${row.meanings}`,
+				content: buildContent(row, false),
 				components: [button],
 			});
 		});
