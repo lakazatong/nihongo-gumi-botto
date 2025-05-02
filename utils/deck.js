@@ -77,7 +77,7 @@ function checkOrCreateDeckOwnership(interaction, callback) {
 
 function buildContent(row, spoiler = true) {
 	const s = spoiler ? "||" : "";
-	const lines = [`${row.kanji}`, `### Reading\n${s}${row.reading}${s}`];
+	const lines = [`${row.kanji}`, `${s}${row.reading}${s}`];
 
 	lines.push(
 		`### Meanings\n${s}${row.meanings
