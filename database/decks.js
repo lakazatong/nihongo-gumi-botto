@@ -3,9 +3,33 @@
 const { MessageFlags } = require("discord.js");
 const sqlite3 = require("sqlite3").verbose();
 
+function handleGetError(interaction, err) {
+	if (err) {
+		console.error("get", err);
+		interaction.reply({
+			content: "An error occurred with sqlite.",
+			flags: MessageFlags.Ephemeral,
+		});
+		return true;
+	}
+	return false;
+}
+
+function handleRunError(interaction, err) {
+	if (err) {
+		console.error("run", err);
+		interaction.reply({
+			content: "An error occurred with sqlite.",
+			flags: MessageFlags.Ephemeral,
+		});
+		return true;
+	}
+	return false;
+}
+
 class DecksDatabase {
 	constructor(path = "./database/decks.db") {
-		this.db = new sqlite3.Database(path, (err) => {
+		this.db = new sqlite3.Database(path, function (err) {
 			if (err) {
 				console.error("Error opening decks.db:", err.message);
 			} else {
@@ -39,35 +63,24 @@ class DecksDatabase {
 		});
 	}
 
-	#handleGetError(interaction, err) {
-		if (err) {
-			console.error("get", err);
-			interaction.reply({
-				content: "An error occurred with sqlite.",
-				flags: MessageFlags.Ephemeral,
-			});
-			return true;
-		}
-		return false;
-	}
-
-	getOwner(interaction, deck, callback) {
-		this.db.get(`SELECT * FROM owners WHERE deck = ?`, [deck], (err, row) => {
-			if (this.#handleGetError(interaction, err)) return;
-			callback(row?.user_id || null);
+	isOwner(interaction, userId, deck, callback) {
+		this.db.all(`SELECT user_id FROM owners WHERE deck = ?`, [deck], function (err, rows) {
+			if (handleGetError(interaction, err)) return;
+			if (!rows.length) return callback(null);
+			callback(rows.some((row) => row.user_id === userId));
 		});
 	}
 
 	getDefaultDeck(interaction, userId, callback) {
-		this.db.get(`SELECT deck FROM defaults WHERE user_id = ?`, [userId], (err, row) => {
-			if (this.#handleGetError(interaction, err)) return;
+		this.db.get(`SELECT deck FROM defaults WHERE user_id = ?`, [userId], function (err, row) {
+			if (handleGetError(interaction, err)) return;
 			callback(row?.deck || null);
 		});
 	}
 
 	getRandomCard(interaction, deck, callback) {
-		this.db.get("SELECT * FROM decks WHERE deck = ? ORDER BY RANDOM() LIMIT 1", [deck], (err, row) => {
-			if (this.#handleGetError(interaction, err)) return;
+		this.db.get("SELECT * FROM decks WHERE deck = ? ORDER BY RANDOM() LIMIT 1", [deck], function (err, row) {
+			if (handleGetError(interaction, err)) return;
 			if (!row) {
 				interaction.reply({
 					content: "Empty deck.",
@@ -80,15 +93,15 @@ class DecksDatabase {
 	}
 
 	getCardById(interaction, id, callback) {
-		this.db.get("SELECT * FROM decks WHERE id = ?", [id], (err, row) => {
-			if (this.#handleGetError(interaction, err)) return;
+		this.db.get("SELECT * FROM decks WHERE id = ?", [id], function (err, row) {
+			if (handleGetError(interaction, err)) return;
 			callback(row);
 		});
 	}
 
 	getCardByKanji(interaction, deck, kanji, callback) {
-		this.db.get("SELECT * FROM decks WHERE deck = ? AND kanji = ?", [deck, kanji], (err, row) => {
-			if (this.#handleGetError(interaction, err)) return;
+		this.db.get("SELECT * FROM decks WHERE deck = ? AND kanji = ?", [deck, kanji], function (err, row) {
+			if (handleGetError(interaction, err)) return;
 			if (!row) {
 				interaction.reply({
 					content: `This kanji does not exist in the deck ${deck}.`,
@@ -104,8 +117,8 @@ class DecksDatabase {
 		this.db.get(
 			"SELECT COUNT(*) as count, SUM(score) as total, AVG(score) as average FROM decks WHERE deck = ?",
 			[deck],
-			(err, row) => {
-				if (this.#handleGetError(interaction, err)) return;
+			function (err, row) {
+				if (handleGetError(interaction, err)) return;
 				if (!row) {
 					interaction.reply({
 						content: `This deck does not exist.`,
@@ -131,7 +144,7 @@ class DecksDatabase {
 			GROUP BY d.deck`,
 			[userId],
 			(err, rows) => {
-				if (this.#handleGetError(interaction, err)) return;
+				if (handleGetError(interaction, err)) return;
 				if (!rows || rows.length === 0) {
 					interaction.reply({
 						content: `You don't own any decks.`,
@@ -144,35 +157,23 @@ class DecksDatabase {
 		);
 	}
 
-	#handleRunError(interaction, err) {
-		if (err) {
-			console.error("run", err);
-			interaction.reply({
-				content: "An error occurred with sqlite.",
-				flags: MessageFlags.Ephemeral,
-			});
-			return true;
-		}
-		return false;
-	}
-
 	addOwner(interaction, userId, deck, callback) {
-		this.db.run(`INSERT INTO owners (user_id, deck) VALUES (?, ?)`, [userId, deck], (err) => {
-			if (this.#handleRunError(interaction, err)) return;
+		this.db.run(`INSERT INTO owners (user_id, deck) VALUES (?, ?)`, [userId, deck], function (err) {
+			if (handleRunError(interaction, err)) return;
 			callback?.(this);
 		});
 	}
 
 	removeOwner(interaction, userId, deck, callback) {
-		this.db.run(`DELETE FROM owners WHERE user_id = ? AND deck = ?`, [userId, deck], (err) => {
-			if (this.#handleRunError(interaction, err)) return;
+		this.db.run(`DELETE FROM owners WHERE user_id = ? AND deck = ?`, [userId, deck], function (err) {
+			if (handleRunError(interaction, err)) return;
 			callback?.(this);
 		});
 	}
 
 	updateDefault(interaction, userId, deck, callback) {
-		this.db.run(`INSERT OR REPLACE INTO defaults (user_id, deck) VALUES (?, ?)`, [userId, deck], (err) => {
-			if (this.#handleRunError(interaction, err)) return;
+		this.db.run(`INSERT OR REPLACE INTO defaults (user_id, deck) VALUES (?, ?)`, [userId, deck], function (err) {
+			if (handleRunError(interaction, err)) return;
 			callback?.(this);
 		});
 	}
@@ -181,7 +182,7 @@ class DecksDatabase {
 		this.db.run(
 			"INSERT INTO decks (deck, kanji, reading, meanings, forms, example) VALUES (?, ?, ?, ?, ?, ?)",
 			[deck, kanji, reading, meanings, forms, example],
-			(err) => {
+			function (err) {
 				if (err) {
 					if (err.code === "SQLITE_CONSTRAINT") {
 						interaction.reply({
@@ -203,8 +204,8 @@ class DecksDatabase {
 	}
 
 	clearDeck(interaction, deck, callback) {
-		this.db.run("DELETE FROM decks WHERE deck = ?", [deck], (err) => {
-			if (this.#handleRunError(interaction, err)) return;
+		this.db.run("DELETE FROM decks WHERE deck = ?", [deck], function (err) {
+			if (handleRunError(interaction, err)) return;
 			callback?.(this);
 		});
 	}
@@ -242,31 +243,31 @@ class DecksDatabase {
 
 		const sql = `UPDATE decks SET ${fields.join(", ")} WHERE deck = ? AND kanji = ?`;
 
-		this.db.run(sql, values, (err) => {
-			if (this.#handleRunError(interaction, err)) return;
+		this.db.run(sql, values, function (err) {
+			if (handleRunError(interaction, err)) return;
 			callback?.(this);
 		});
 	}
 
 	deleteCard(interaction, deck, kanji, callback) {
-		this.db.run("DELETE FROM decks WHERE deck = ? AND kanji = ?", [deck, kanji], (err) => {
-			if (this.#handleRunError(interaction, err)) return;
+		this.db.run("DELETE FROM decks WHERE deck = ? AND kanji = ?", [deck, kanji], function (err) {
+			if (handleRunError(interaction, err)) return;
 			callback?.(this);
 		});
 	}
 
 	updateScoreById(interaction, id, newScore, callback) {
-		this.db.run("UPDATE decks SET score = ? WHERE id = ?", [newScore, id], (err) => {
-			if (this.#handleRunError(interaction, err)) return;
+		this.db.run("UPDATE decks SET score = ? WHERE id = ?", [newScore, id], function (err) {
+			if (handleRunError(interaction, err)) return;
 			callback(this);
 		});
 	}
 
 	dropDeck(interaction, deck, callback) {
-		this.db.run("DELETE FROM decks WHERE deck = ?", [deck], (err) => {
-			if (this.#handleRunError(interaction, err)) return;
-			this.db.run("DELETE FROM owners WHERE deck = ?", [deck], (err) => {
-				if (this.#handleRunError(interaction, err)) return;
+		this.db.run("DELETE FROM decks WHERE deck = ?", [deck], function (err) {
+			if (handleRunError(interaction, err)) return;
+			this.db.run("DELETE FROM owners WHERE deck = ?", [deck], function (err) {
+				if (handleRunError(interaction, err)) return;
 				callback?.(this);
 			});
 		});

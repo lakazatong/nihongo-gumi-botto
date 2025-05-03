@@ -25,8 +25,8 @@ async function callback(interaction) {
 		return;
 	}
 
-	db.getOwner(interaction, deck, (owner_id) => {
-		if (owner_id !== null && owner_id !== userId) {
+	db.isOwner(interaction, userId, deck, (bool) => {
+		if (bool === false) {
 			interaction.reply({
 				content: "You are not the owner of this deck.",
 				flags: MessageFlags.Ephemeral,

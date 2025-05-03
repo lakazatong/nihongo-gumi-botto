@@ -8,10 +8,17 @@ async function callback(interaction, deck) {
 	const target = await getTargetUser(interaction);
 	if (!target) return;
 	db.addOwner(interaction, target.id, deck, (response) => {
-		interaction.reply({
-			content: `${target.username} now also has ownership of the deck ${deck}.`,
-			flags: MessageFlags.Ephemeral,
-		});
+		if (response.changes > 0) {
+			interaction.reply({
+				content: `${target.username} now also has ownership of the deck ${deck}.`,
+				flags: MessageFlags.Ephemeral,
+			});
+		} else {
+			interaction.reply({
+				content: `${target.username} already has ownership of the deck ${deck}.`,
+				flags: MessageFlags.Ephemeral,
+			});
+		}
 	});
 }
 
