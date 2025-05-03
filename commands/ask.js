@@ -4,7 +4,7 @@ const { SlashCommandBuilder, ActionRowBuilder } = require("discord.js");
 const db = require("../database/decks.js");
 const { getCorrectButton } = require("../buttons/correct.js");
 const { getIncorrectButton } = require("../buttons/incorrect.js");
-const { buildContent } = require("../utils/deck.js");
+const { buildContent } = require("../utils/decks.js");
 
 async function callback(interaction, deck) {
 	db.getRandomCard(interaction, deck, (row) => {
