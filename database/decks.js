@@ -29,7 +29,7 @@ function handleRunError(interaction, err) {
 
 class DecksDatabase {
 	constructor(path = "./database/decks.db") {
-		this.db = new sqlite3.Database(path, function (err) {
+		this.db = new sqlite3.Database(path, (err) => {
 			if (err) {
 				console.error("Error opening decks.db:", err.message);
 			} else {
@@ -64,7 +64,7 @@ class DecksDatabase {
 	}
 
 	isOwner(interaction, userId, deck, callback) {
-		this.db.all(`SELECT user_id FROM owners WHERE deck = ?`, [deck], function (err, rows) {
+		this.db.all(`SELECT user_id FROM owners WHERE deck = ?`, [deck], (err, rows) => {
 			if (handleGetError(interaction, err)) return;
 			if (!rows.length) return callback(null);
 			callback(rows.some((row) => row.user_id === userId));
@@ -72,14 +72,14 @@ class DecksDatabase {
 	}
 
 	getDefaultDeck(interaction, userId, callback) {
-		this.db.get(`SELECT deck FROM defaults WHERE user_id = ?`, [userId], function (err, row) {
+		this.db.get(`SELECT deck FROM defaults WHERE user_id = ?`, [userId], (err, row) => {
 			if (handleGetError(interaction, err)) return;
 			callback(row?.deck || null);
 		});
 	}
 
 	getRandomCard(interaction, deck, callback) {
-		this.db.get("SELECT * FROM decks WHERE deck = ? ORDER BY RANDOM() LIMIT 1", [deck], function (err, row) {
+		this.db.get("SELECT * FROM decks WHERE deck = ? ORDER BY RANDOM() LIMIT 1", [deck], (err, row) => {
 			if (handleGetError(interaction, err)) return;
 			if (!row) {
 				interaction.reply({
@@ -93,14 +93,14 @@ class DecksDatabase {
 	}
 
 	getCardById(interaction, id, callback) {
-		this.db.get("SELECT * FROM decks WHERE id = ?", [id], function (err, row) {
+		this.db.get("SELECT * FROM decks WHERE id = ?", [id], (err, row) => {
 			if (handleGetError(interaction, err)) return;
 			callback(row);
 		});
 	}
 
 	getCardByKanji(interaction, deck, kanji, callback) {
-		this.db.get("SELECT * FROM decks WHERE deck = ? AND kanji = ?", [deck, kanji], function (err, row) {
+		this.db.get("SELECT * FROM decks WHERE deck = ? AND kanji = ?", [deck, kanji], (err, row) => {
 			if (handleGetError(interaction, err)) return;
 			if (!row) {
 				interaction.reply({
@@ -117,7 +117,7 @@ class DecksDatabase {
 		this.db.get(
 			"SELECT COUNT(*) as count, SUM(score) as total, AVG(score) as average FROM decks WHERE deck = ?",
 			[deck],
-			function (err, row) {
+			(err, row) => {
 				if (handleGetError(interaction, err)) return;
 				if (!row) {
 					interaction.reply({
@@ -259,16 +259,18 @@ class DecksDatabase {
 	updateScoreById(interaction, id, newScore, callback) {
 		this.db.run("UPDATE decks SET score = ? WHERE id = ?", [newScore, id], function (err) {
 			if (handleRunError(interaction, err)) return;
-			callback(this);
+			callback?.(this);
 		});
 	}
 
 	dropDeck(interaction, deck, callback) {
-		this.db.run("DELETE FROM decks WHERE deck = ?", [deck], function (err) {
+		const db = this.db;
+		db.run("DELETE FROM decks WHERE deck = ?", [deck], function (err) {
 			if (handleRunError(interaction, err)) return;
-			this.db.run("DELETE FROM owners WHERE deck = ?", [deck], function (err) {
+			const deckDeletionResponse = this;
+			db.run("DELETE FROM owners WHERE deck = ?", [deck], function (err) {
 				if (handleRunError(interaction, err)) return;
-				callback?.(this);
+				callback?.(deckDeletionResponse, this);
 			});
 		});
 	}
