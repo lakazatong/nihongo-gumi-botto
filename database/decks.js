@@ -137,6 +137,13 @@ class DecksDatabase {
 		});
 	}
 
+	removeOwner(interaction, userId, deck, callback) {
+		this.db.run(`DELETE FROM owners WHERE user_id = ? AND deck = ?`, [userId, deck], (err) => {
+			if (this.#handleRunError(interaction, err)) return;
+			callback?.(this);
+		});
+	}
+
 	updateDefault(interaction, userId, deck, callback) {
 		this.db.run(`INSERT OR REPLACE INTO defaults (user_id, deck) VALUES (?, ?)`, [userId, deck], (err) => {
 			if (this.#handleRunError(interaction, err)) return;

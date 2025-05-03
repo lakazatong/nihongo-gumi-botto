@@ -1,0 +1,55 @@
+"use strict";
+
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
+const db = require("../database/decks.js");
+
+async function callback(interaction, deck) {
+	const friend = interaction.options.getUser("friend");
+	const friendId = interaction.options.getInteger("id");
+
+	if (friend && friendId) {
+		return interaction.reply({
+			content: "You can only provide either a friend or an ID, not both.",
+			flags: MessageFlags.Ephemeral,
+		});
+	}
+
+	if (!friend && !friendId) {
+		return interaction.reply({
+			content: "You must provide either a friend or an ID.",
+			flags: MessageFlags.Ephemeral,
+		});
+	}
+
+	const target = friend || (await interaction.client.users.fetch(friendId));
+
+	db.removeOwner(interaction, target.id, deck, (response) => {
+		if (response.changes > 0) {
+			interaction.reply({
+				content: `${target.username} no longer has ownership of the deck ${deck}.`,
+				flags: MessageFlags.Ephemeral,
+			});
+		} else {
+			interaction.reply({
+				content: `${target.username} never had ownership of the deck ${deck}.`,
+				flags: MessageFlags.Ephemeral,
+			});
+		}
+	});
+}
+
+module.exports = {
+	data: new SlashCommandBuilder()
+		.setName("revoke")
+		.setDescription("Removes someone else's access to one of your decks.")
+		.addUserOption((opt) =>
+			opt.setName("friend").setDescription("The user to revoke a deck from").setRequired(false)
+		)
+		.addIntegerOption((opt) =>
+			opt.setName("id").setDescription("The user ID to revoke a deck from").setRequired(false)
+		)
+		.addStringOption((opt) =>
+			opt.setName("deck").setDescription("The name of the deck to revoke").setRequired(false)
+		),
+	callback,
+};
