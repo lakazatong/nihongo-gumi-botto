@@ -2,14 +2,14 @@
 
 const fs = require("fs");
 
-const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, Partials } = require("discord.js");
+const { Client, GatewayIntentBits, REST, Routes, Partials } = require("discord.js");
 const { checkDeckOwnership, checkOrCreateDeckOwnership } = require("./utils/deck.js");
 
 require("dotenv").config();
 
 // long requires
 require("./database/decks.js");
-require("./utils/anki_parser.js");
+require("./utils/anki_importer.js");
 
 const client = new Client({
 	intents: [

@@ -118,6 +118,32 @@ class DecksDatabase {
 		);
 	}
 
+	getAllDeckStats(interaction, userId, callback) {
+		this.db.all(
+			`SELECT 
+				d.deck,
+				COUNT(*) as count,
+				SUM(d.score) as total,
+				AVG(d.score) as average
+			FROM decks d
+			INNER JOIN owners o ON d.deck = o.deck
+			WHERE o.user_id = ?
+			GROUP BY d.deck`,
+			[userId],
+			(err, rows) => {
+				if (this.#handleGetError(interaction, err)) return;
+				if (!rows || rows.length === 0) {
+					interaction.reply({
+						content: `You don't own any decks.`,
+						flags: MessageFlags.Ephemeral,
+					});
+					return;
+				}
+				callback(rows);
+			}
+		);
+	}
+
 	#handleRunError(interaction, err) {
 		if (err) {
 			console.error("run", err);

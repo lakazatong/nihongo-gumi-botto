@@ -5,7 +5,7 @@ const db = require("../database/decks.js");
 
 async function callback(interaction, deck) {
 	const friend = interaction.options.getUser("friend");
-	const friendId = interaction.options.getInteger("id");
+	const friendId = interaction.options.getString("id");
 
 	if (friend && friendId) {
 		return interaction.reply({
@@ -17,6 +17,13 @@ async function callback(interaction, deck) {
 	if (!friend && !friendId) {
 		return interaction.reply({
 			content: "You must provide either a friend or a friend ID.",
+			flags: MessageFlags.Ephemeral,
+		});
+	}
+
+	if (friendId && !/^\d{18}$/.test(friendId)) {
+		return interaction.reply({
+			content: "The user ID must be exactly 18 digits long.",
 			flags: MessageFlags.Ephemeral,
 		});
 	}
@@ -38,7 +45,7 @@ module.exports = {
 		.addUserOption((opt) =>
 			opt.setName("friend").setDescription("The user to share a deck with").setRequired(false)
 		)
-		.addIntegerOption((opt) =>
+		.addStringOption((opt) =>
 			opt.setName("id").setDescription("The user ID to share a deck with").setRequired(false)
 		)
 		.addStringOption((opt) =>
