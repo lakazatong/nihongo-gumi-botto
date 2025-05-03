@@ -2,7 +2,7 @@
 
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
-const getTargetUser = require("../utils/decks.js");
+const { getTargetUser } = require("../utils/decks.js");
 
 async function callback(interaction, deck) {
 	const target = await getTargetUser(interaction);
