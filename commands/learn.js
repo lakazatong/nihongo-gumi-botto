@@ -173,7 +173,6 @@ module.exports = {
 				.setDescription("Pauses the current learning session")
 				.setRequired(false)
 				.addChoices([
-					{ name: "1分", value: 1 },
 					{ name: "15分", value: 15 },
 					{ name: "1時間", value: 60 },
 					{ name: "3時間", value: 60 * 3 },
