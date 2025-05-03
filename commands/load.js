@@ -3,7 +3,7 @@
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const fs = require("fs");
 const axios = require("axios");
-const { saveCardsToJson } = require("../utils/anki_parser.js");
+const { saveCardsToJson } = require("../utils/anki_importer.js");
 const db = require("../database/decks.js");
 
 async function callback(interaction, deck) {
