@@ -2,34 +2,11 @@
 
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
+const getTargetUser = require("../utils/decks.js");
 
 async function callback(interaction, deck) {
-	const friend = interaction.options.getUser("friend");
-	const friendId = interaction.options.getString("id");
-
-	if (friend && friendId) {
-		return interaction.reply({
-			content: "You can only provide either a friend or a friend ID, not both.",
-			flags: MessageFlags.Ephemeral,
-		});
-	}
-
-	if (!friend && !friendId) {
-		return interaction.reply({
-			content: "You must provide either a friend or a friend ID.",
-			flags: MessageFlags.Ephemeral,
-		});
-	}
-
-	if (friendId && !/^\d{18}$/.test(friendId)) {
-		return interaction.reply({
-			content: "The user ID must be exactly 18 digits long.",
-			flags: MessageFlags.Ephemeral,
-		});
-	}
-
-	const target = friend || (await interaction.client.users.fetch(friendId));
-
+	const target = await getTargetUser(interaction);
+	if (!target) return;
 	db.addOwner(interaction, target.id, deck, (response) => {
 		interaction.reply({
 			content: `${target.username} now also has ownership of the deck ${deck}.`,

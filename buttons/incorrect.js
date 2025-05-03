@@ -2,7 +2,7 @@
 
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const db = require("../database/decks.js");
-const { buildContent } = require("../utils/deck.js");
+const { buildContent } = require("../utils/decks.js");
 
 const getIncorrectButton = () =>
 	new ButtonBuilder().setCustomId("incorrect").setLabel("❌").setStyle(ButtonStyle.Danger);

@@ -3,7 +3,7 @@
 const fs = require("fs");
 
 const { Client, GatewayIntentBits, REST, Routes, Partials } = require("discord.js");
-const { checkDeckOwnership, checkOrCreateDeckOwnership } = require("./utils/deck.js");
+const { checkDeckOwnership, checkOrCreateDeckOwnership } = require("./utils/decks.js");
 
 require("dotenv").config();
 

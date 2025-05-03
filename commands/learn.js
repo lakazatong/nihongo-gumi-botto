@@ -4,7 +4,7 @@ const { SlashCommandBuilder, MessageFlags, ActionRowBuilder } = require("discord
 const db = require("../database/decks.js");
 const { getCorrectButton } = require("../buttons/correct.js");
 const { getIncorrectButton } = require("../buttons/incorrect.js");
-const { buildContent } = require("../utils/deck.js");
+const { buildContent } = require("../utils/decks.js");
 
 const sessions = new Map();
 

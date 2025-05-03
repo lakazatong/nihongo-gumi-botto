@@ -2,27 +2,11 @@
 
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
+const getTargetUser = require("../utils/decks.js");
 
 async function callback(interaction, deck) {
-	const friend = interaction.options.getUser("friend");
-	const friendId = interaction.options.getInteger("id");
-
-	if (friend && friendId) {
-		return interaction.reply({
-			content: "You can only provide either a friend or an ID, not both.",
-			flags: MessageFlags.Ephemeral,
-		});
-	}
-
-	if (!friend && !friendId) {
-		return interaction.reply({
-			content: "You must provide either a friend or an ID.",
-			flags: MessageFlags.Ephemeral,
-		});
-	}
-
-	const target = friend || (await interaction.client.users.fetch(friendId));
-
+	const target = await getTargetUser(interaction);
+	if (!target) return;
 	db.removeOwner(interaction, target.id, deck, (response) => {
 		if (response.changes > 0) {
 			interaction.reply({
@@ -45,7 +29,7 @@ module.exports = {
 		.addUserOption((opt) =>
 			opt.setName("friend").setDescription("The user to revoke a deck from").setRequired(false)
 		)
-		.addIntegerOption((opt) =>
+		.addStringOption((opt) =>
 			opt.setName("id").setDescription("The user ID to revoke a deck from").setRequired(false)
 		)
 		.addStringOption((opt) =>

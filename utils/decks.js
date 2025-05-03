@@ -106,8 +106,41 @@ function buildContent(row, spoiler = true) {
 	return lines.join("\n");
 }
 
+async function getTargetUser(interaction) {
+	const friend = interaction.options.getUser("friend");
+	const friendId = interaction.options.getString("id");
+
+	if (friend && friendId) {
+		await interaction.reply({
+			content: "You can only provide either a friend or an ID, not both.",
+			flags: MessageFlags.Ephemeral,
+		});
+		return null;
+	}
+
+	if (!friend && !friendId) {
+		await interaction.reply({
+			content: "You must provide either a friend or an ID.",
+			flags: MessageFlags.Ephemeral,
+		});
+		return null;
+	}
+
+	if (friendId && !/^\d{18}$/.test(friendId)) {
+		await interaction.reply({
+			content: "The user ID must be exactly 18 digits long.",
+			flags: MessageFlags.Ephemeral,
+		});
+		return null;
+	}
+
+	const target = friend || (await interaction.client.users.fetch(friendId));
+	return target;
+}
+
 module.exports = {
 	checkDeckOwnership,
 	checkOrCreateDeckOwnership,
 	buildContent,
+	getTargetUser,
 };
