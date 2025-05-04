@@ -7,6 +7,8 @@ async function callback(interaction) {
 }
 
 module.exports = {
-	data: new SlashCommandBuilder().setName("ping").setDescription("Replies with Pong!"),
+	data: new SlashCommandBuilder()
+		.setName(__filename.split("/").pop().replace(".js", ""))
+		.setDescription("Replies with Pong!"),
 	callback,
 };

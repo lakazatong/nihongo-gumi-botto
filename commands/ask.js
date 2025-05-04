@@ -29,7 +29,7 @@ async function callback(interaction, deck) {
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName("ask")
+		.setName(__filename.split("/").pop().replace(".js", ""))
 		.setDescription("Quizzes you with a random card from a deck.")
 		.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
 	callback,

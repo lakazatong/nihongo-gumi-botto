@@ -83,7 +83,7 @@ async function callback(interaction, deck) {
 			});
 		}
 	} catch (err) {
-		console.error("load", err);
+		console.error("import", err);
 		interaction.editReply({
 			content: "An error occurred while getting the file.",
 			flags: MessageFlags.Ephemeral,
@@ -93,9 +93,9 @@ async function callback(interaction, deck) {
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName("load")
-		.setDescription("Loads your anki's exported file in a deck.")
-		.addAttachmentOption((opt) => opt.setName("file").setDescription("The file to load").setRequired(true))
+		.setName(__filename.split("/").pop().replace(".js", ""))
+		.setDescription("Imports all cards from the provided anki's exported file in a deck.")
+		.addAttachmentOption((opt) => opt.setName("file").setDescription("The file to import").setRequired(true))
 		.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
 	callback,
 };

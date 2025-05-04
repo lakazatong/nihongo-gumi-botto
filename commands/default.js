@@ -45,7 +45,7 @@ async function callback(interaction) {
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName("default")
+		.setName(__filename.split("/").pop().replace(".js", ""))
 		.setDescription("Tells you what your default deck is, or changes your default deck if you provide one.")
 		.addStringOption((opt) => opt.setName("deck").setDescription("The default deck name").setRequired(false)),
 	callback,

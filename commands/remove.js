@@ -24,7 +24,7 @@ async function callback(interaction, deck) {
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName("remove")
+		.setName(__filename.split("/").pop().replace(".js", ""))
 		.setDescription("Removes a card from a deck.")
 		.addStringOption((opt) => opt.setName("kanji").setDescription("The kanjis writing").setRequired(true))
 		.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),

@@ -14,7 +14,7 @@ async function callback(interaction, deck) {
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName("drop")
+		.setName(__filename.split("/").pop().replace(".js", ""))
 		.setDescription("Drops a deck.")
 		.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
 	callback,

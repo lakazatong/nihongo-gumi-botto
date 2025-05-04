@@ -14,6 +14,8 @@ async function callback(interaction) {
 }
 
 module.exports = {
-	data: new SlashCommandBuilder().setName("list").setDescription("Lists all your decks and their statistics."),
+	data: new SlashCommandBuilder()
+		.setName(__filename.split("/").pop().replace(".js", ""))
+		.setDescription("Lists all your decks and their statistics."),
 	callback,
 };

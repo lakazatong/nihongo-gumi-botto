@@ -11,6 +11,8 @@ The anki's export type the \`load\` command expects is "Cards in Plain Text (.tx
 }
 
 module.exports = {
-	data: new SlashCommandBuilder().setName("help").setDescription("Details about deck commands."),
+	data: new SlashCommandBuilder()
+		.setName(__filename.split("/").pop().replace(".js", ""))
+		.setDescription("Details about deck commands."),
 	callback,
 };

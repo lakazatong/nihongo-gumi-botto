@@ -24,7 +24,7 @@ async function callback(interaction, deck) {
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName("share")
+		.setName(__filename.split("/").pop().replace(".js", ""))
 		.setDescription("Gives someone else access to one of your decks.")
 		.addUserOption((opt) =>
 			opt.setName("friend").setDescription("The user to share a deck with").setRequired(false)

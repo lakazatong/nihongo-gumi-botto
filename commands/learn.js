@@ -162,7 +162,7 @@ async function callback(interaction, deck) {
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName("learn")
+		.setName(__filename.split("/").pop().replace(".js", ""))
 		.setDescription("Periodically quizzes you with a random card from a deck or some decks.")
 		.addBooleanOption((opt) =>
 			opt.setName("stop").setDescription("Stops the current learning session").setRequired(false)

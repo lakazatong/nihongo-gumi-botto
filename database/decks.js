@@ -33,19 +33,7 @@ class DecksDatabase {
 			if (err) {
 				console.error("Error opening decks.db:", err.message);
 			} else {
-				this.db.run(`
-                    CREATE TABLE IF NOT EXISTS decks (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        deck TEXT NOT NULL,
-                        kanji TEXT NOT NULL,
-                        reading TEXT NOT NULL,
-                        meanings TEXT NOT NULL,
-						forms TEXT,
-                        example TEXT,
-                        score INTEGER DEFAULT 0,
-                        UNIQUE (deck, kanji)
-                    )
-                `);
+				this.db.run();
 				this.db.run(`
                     CREATE TABLE IF NOT EXISTS defaults (
                         user_id TEXT PRIMARY KEY,
@@ -54,10 +42,10 @@ class DecksDatabase {
                 `);
 				this.db.run(`
                     CREATE TABLE IF NOT EXISTS owners (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id TEXT NOT NULL,
-                        deck TEXT NOT NULL
-                    )
+						user_id TEXT NOT NULL,
+						deck TEXT NOT NULL,
+						PRIMARY KEY (user_id, deck)
+					)
                 `);
 			}
 		});
@@ -261,6 +249,29 @@ class DecksDatabase {
 			if (handleRunError(interaction, err)) return;
 			callback?.(this);
 		});
+	}
+
+	createDeck(interaction, userId, deck, callback) {
+		const db = this.db;
+		db.run(
+			`CREATE TABLE ${deck} (
+				kanji TEXT PRIMARY KEY,
+				reading TEXT NOT NULL,
+				meanings TEXT NOT NULL,
+				forms TEXT,
+				example TEXT,
+				score INTEGER NOT NULL DEFAULT 0
+			)`,
+			[],
+			function (err) {
+				if (handleRunError(interaction, err)) return;
+				const deckDeletionResponse = this;
+				db.run("DELETE FROM owners WHERE deck = ?", [deck], function (err) {
+					if (handleRunError(interaction, err)) return;
+					callback?.(deckDeletionResponse, this);
+				});
+			}
+		);
 	}
 
 	dropDeck(interaction, deck, callback) {

@@ -24,7 +24,7 @@ async function callback(interaction, deck) {
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName("revoke")
+		.setName(__filename.split("/").pop().replace(".js", ""))
 		.setDescription("Removes someone else's access to one of your decks.")
 		.addUserOption((opt) =>
 			opt.setName("friend").setDescription("The user to revoke a deck from").setRequired(false)
