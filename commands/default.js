@@ -8,7 +8,7 @@ async function callback(interaction) {
 	const deck = interaction.options.getString("deck");
 
 	if (deck) {
-		db.getOwners(interaction, userId, deck, (owner_ids) => {
+		db.getOwners(interaction, deck, (owner_ids) => {
 			if (owner_ids.length > 0 && !owner_ids.includes(userId)) {
 				interaction.reply({
 					content: `Your are not the owner of the deck **${deck}**.`,
