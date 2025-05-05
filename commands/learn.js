@@ -46,6 +46,7 @@ function startSession(deck, interval, user, resume) {
 						message.edit({
 							content: buildContent(card, false),
 							flags: MessageFlags.Ephemeral,
+							components: [],
 						}),
 					30000
 				);

@@ -22,6 +22,7 @@ async function callback(interaction, deck) {
 				interaction.editReply({
 					content: buildContent(card, false),
 					flags: MessageFlags.Ephemeral,
+					components: [],
 				}),
 			30000
 		);
