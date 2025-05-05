@@ -53,9 +53,13 @@ class DecksDatabase {
 	/* setters */
 
 	updateDefault(interaction, userId, deck, callback) {
-		this.db.run(`INSERT OR IGNORE INTO defaults (user_id, deck) VALUES (?, ?)`, [userId, deck], function (err) {
-			if (isOk(interaction, err)) callback?.(this);
-		});
+		this.db.run(
+			`INSERT INSERT OR REPLACE INTO defaults (user_id, deck) VALUES (?, ?)`,
+			[userId, deck],
+			function (err) {
+				if (isOk(interaction, err)) callback?.(this);
+			}
+		);
 	}
 
 	/* owners handling */
@@ -93,7 +97,7 @@ class DecksDatabase {
 	/* getters */
 
 	getRandomCard(interaction, deck, callback) {
-		this.db.get(`SELECT * FROM ${deck} ORDER BY RANDOM() LIMIT 1`, [deck], (err, card) => {
+		this.db.get(`SELECT * FROM ${deck} ORDER BY RANDOM() LIMIT 1`, [], (err, card) => {
 			if (isOk(interaction, err)) callback(card);
 		});
 	}
@@ -130,6 +134,11 @@ class DecksDatabase {
 		this.getDecks(interaction, userId, (decks) => {
 			const stats = [];
 			let remaining = decks.length;
+
+			if (remaining === 0) {
+				callback(stats);
+				return;
+			}
 
 			decks.forEach((deck) => {
 				this.db.get(

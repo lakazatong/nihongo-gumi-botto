@@ -8,7 +8,7 @@ function withDeck(interaction, ownerCallback, noOwnerCallback) {
 	const deck = interaction.options.getString("deck") || null;
 
 	function help(deck) {
-		db.getOwners(interaction, userId, deck, (owner_ids) => {
+		db.getOwners(interaction, deck, (owner_ids) => {
 			if (owner_ids.length === 0) {
 				noOwnerCallback(deck);
 			} else if (owner_ids.includes(userId)) {

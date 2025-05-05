@@ -7,7 +7,6 @@ const { getTargetUser } = require("../utils/decks.js");
 async function callback(interaction, deck) {
 	const target = await getTargetUser(interaction);
 	if (!target) return;
-	db.getOwners;
 	db.addOwner(interaction, target.id, deck, (response) => {
 		if (response.changes === 0) {
 			interaction.reply({

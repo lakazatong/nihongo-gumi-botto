@@ -15,7 +15,7 @@ function getKey(id, deck) {
 function startSession(deck, interval, user, resume) {
 	const userId = user.id;
 	function ask() {
-		db.getOwners(interaction, userId, deck, (owner_ids) => {
+		db.getOwners(interaction, deck, (owner_ids) => {
 			if (owner_ids.length === 0) {
 				user.send({
 					content: `Session: **${deck}** doesn't exist anymore.`,

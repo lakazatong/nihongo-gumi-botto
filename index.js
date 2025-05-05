@@ -65,6 +65,7 @@ client.once("ready", () => {
 });
 
 client.on("interactionCreate", async (interaction) => {
+	const userId = interaction.user.id;
 	if (interaction.isCommand()) {
 		const { data, callback } = require("./commands/" + interaction.commandName + ".js");
 		if (data?.options?.some?.((opt) => opt.name === "deck") && interaction.commandName !== "default") {
