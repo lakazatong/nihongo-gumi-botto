@@ -3,6 +3,14 @@ const db = require("../database/decks.js");
 
 function callback(interaction) {
 	db.getAllDeckStats(interaction, interaction.user.id, (stats) => {
+		if (!stats.length) {
+			interaction.reply({
+				content: "You don't have any decks.",
+				flags: MessageFlags.Ephemeral,
+			});
+			return;
+		}
+
 		stats.sort((a, b) => (b.count || 0) - (a.count || 0));
 
 		let replyContent = "name (card count, total score, average score):\n";
