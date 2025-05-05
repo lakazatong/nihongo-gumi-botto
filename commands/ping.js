@@ -1,9 +1,12 @@
 "use strict";
 
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 
 async function callback(interaction) {
-	await interaction.reply("Pong!");
+	await interaction.reply({
+		content: "Pong!",
+		flags: MessageFlags.Ephemeral,
+	});
 }
 
 module.exports = {

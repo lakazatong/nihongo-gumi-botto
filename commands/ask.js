@@ -16,7 +16,14 @@ async function callback(interaction, deck) {
 			return;
 		}
 
-		const timeoutId = setTimeout(async () => interaction.reply(buildContent(card)), 30000);
+		const timeoutId = setTimeout(
+			async () =>
+				interaction.reply({
+					content: buildContent(card),
+					flags: MessageFlags.Ephemeral,
+				}),
+			30000
+		);
 
 		const buttons = new ActionRowBuilder().addComponents(
 			getCorrectButton().setCustomId(`correct_${deck}_${card.id}_${timeoutId}`),
@@ -25,6 +32,7 @@ async function callback(interaction, deck) {
 
 		interaction.reply({
 			content: buildContent(card),
+			flags: MessageFlags.Ephemeral,
 			components: [buttons],
 		});
 	});

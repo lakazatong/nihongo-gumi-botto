@@ -1,15 +1,16 @@
 "use strict";
 
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
 
 async function callback(interaction, deck) {
 	db.getDeckStats(interaction, deck, (stats) => {
-		interaction.reply(
-			`Deck: **${deck}**\nCards: ${stats.count || 0}\nTotal Score: ${stats.total || 0}\nAverage Score: ${
+		interaction.reply({
+			content: `Deck: **${deck}**\nCards: ${stats.count || 0}\nTotal Score: ${stats.total || 0}\nAverage Score: ${
 				stats.average?.toFixed(2) || 0
-			}`
-		);
+			}`,
+			flags: MessageFlags.Ephemeral,
+		});
 	});
 }
 
