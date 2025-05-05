@@ -16,8 +16,8 @@ async function callback(interaction, deck) {
 		}, 30000);
 
 		const buttons = new ActionRowBuilder().addComponents(
-			getCorrectButton().setCustomId(`correct_${row.id}_${timeoutId}`),
-			getIncorrectButton().setCustomId(`incorrect_${row.id}_${timeoutId}`)
+			getCorrectButton().setCustomId(`correct_${deck}_${row.id}_${timeoutId}`),
+			getIncorrectButton().setCustomId(`incorrect_${deck}_${row.id}_${timeoutId}`)
 		);
 
 		interaction.reply({

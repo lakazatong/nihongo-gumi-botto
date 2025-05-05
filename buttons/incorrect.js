@@ -8,10 +8,10 @@ const getIncorrectButton = () =>
 	new ButtonBuilder().setCustomId("incorrect").setLabel("❌").setStyle(ButtonStyle.Danger);
 
 async function callback(interaction) {
-	const [_, id, timeoutId] = interaction.customId.split("_");
+	const [_, deck, id, timeoutId] = interaction.customId.split("_");
 	clearTimeout(timeoutId);
-	db.getCardById(interaction, id, (row) => {
-		db.updateScoreById(interaction, id, Math.max(0, row.score - 1), async (response) => {
+	db.getCardById(interaction, deck, id, (row) => {
+		db.updateScoreById(interaction, deck, id, Math.max(0, row.score - 1), async (response) => {
 			const button = new ActionRowBuilder().addComponents(getIncorrectButton().setDisabled(true));
 			await interaction.update({
 				content: buildContent(row, false),

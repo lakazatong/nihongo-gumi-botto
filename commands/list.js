@@ -4,11 +4,17 @@ const { SlashCommandBuilder } = require("discord.js");
 const db = require("../database/decks.js");
 
 async function callback(interaction) {
-	db.getAllDeckStats(interaction, interaction.user.id, (rows) => {
+	db.getAllDeckStats(interaction, interaction.user.id, (stats) => {
 		interaction.reply({
 			content:
 				"name (card count, total score, average score)\n" +
-				rows.map((r) => `- ${r.deck} (${r.count}, ${r.total || 0}, ${r.average?.toFixed(2) || 0})`).join("\n"),
+				stats
+					.map((r) =>
+						`- ${r.deck} ` + r
+							? `(${r.count || 0}, ${r.total || 0}, ${r.average?.toFixed(2) || 0})`
+							: "(error)"
+					)
+					.join("\n"),
 		});
 	});
 }

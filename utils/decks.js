@@ -4,22 +4,10 @@ const { MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
 
 function checkDeckOwnership(interaction, callback) {
+	const userId = interaction.user.id;
+
 	function help2(deck) {
-		db.isOwner(interaction, interaction.user.id, deck, (bool) => {
-			if (bool === null) {
-				interaction.reply({
-					content: "The deck does not exist.",
-					flags: MessageFlags.Ephemeral,
-				});
-			} else if (bool === false) {
-				interaction.reply({
-					content: "You are not the owner of this deck.",
-					flags: MessageFlags.Ephemeral,
-				});
-			} else {
-				callback(deck);
-			}
-		});
+		db.ifOwner(interaction, userId, deck, callback);
 	}
 
 	const deck = interaction.options.getString("deck") || null;
@@ -27,9 +15,9 @@ function checkDeckOwnership(interaction, callback) {
 	if (deck) {
 		help2(deck);
 	} else {
-		db.getDefaultDeck(interaction, interaction.user.id, (deck) => {
-			if (deck) {
-				help2(deck);
+		db.getDefaultDeck(interaction, userId, (defaultDeck) => {
+			if (defaultDeck) {
+				help2(defaultDeck);
 			} else {
 				interaction.reply({
 					content: "No deck was given and no default deck was set.",
@@ -41,18 +29,20 @@ function checkDeckOwnership(interaction, callback) {
 }
 
 function checkOrCreateDeckOwnership(interaction, callback) {
+	const userId = interaction.user.id;
+
 	function help2(deck) {
-		db.isOwner(interaction, interaction.user.id, deck, (bool) => {
-			if (bool === null) {
-				db.addOwner(interaction, interaction.user.id, deck);
+		db.getOwners(interaction, deck, (owner_ids) => {
+			if (owner_ids.length === 0) {
+				db.addOwner(interaction, userId, deck);
 				callback(deck);
-			} else if (bool === false) {
+			} else if (owner_ids.some((id) => id === userId)) {
+				callback(deck);
+			} else {
 				interaction.reply({
-					content: "You are not the owner of this deck.",
+					content: `Your are not the owner of the deck ${deck}.`,
 					flags: MessageFlags.Ephemeral,
 				});
-			} else {
-				callback(deck);
 			}
 		});
 	}
@@ -62,9 +52,9 @@ function checkOrCreateDeckOwnership(interaction, callback) {
 	if (deck) {
 		help2(deck);
 	} else {
-		db.getDefaultDeck(interaction, interaction.user.id, (deck) => {
-			if (deck) {
-				help2(deck);
+		db.getDefaultDeck(interaction, userId, (defaultDeck) => {
+			if (defaultDeck) {
+				help2(defaultDeck);
 			} else {
 				interaction.reply({
 					content: "No deck was given and no default deck was set.",
