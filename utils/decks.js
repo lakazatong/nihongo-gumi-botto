@@ -47,6 +47,7 @@ function buildContent(row, spoiler = true) {
 			.split(";")
 			.map((entry) => {
 				const [category, values] = entry.split(":");
+				if (!values) return `- ${category}`;
 				const items = values
 					.split(",")
 					.map((v) => `- ${v}`)
