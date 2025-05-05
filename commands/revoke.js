@@ -10,12 +10,12 @@ async function callback(interaction, deck) {
 	db.removeOwner(interaction, target.id, deck, (response) => {
 		if (response.changes === 0) {
 			interaction.reply({
-				content: `**${target.username}** never had ownership of **${deck}**.`,
+				content: `**${target.globalName}** never had ownership of **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 		} else {
 			interaction.reply({
-				content: `**${target.username}** no longer has ownership of **${deck}**.`,
+				content: `**${target.globalName}** no longer has ownership of **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 		}
