@@ -132,23 +132,13 @@ class DecksDatabase {
 		this.db.all(`SELECT * FROM ${deck}`, [], (err, cards) => {
 			if (!isOk(interaction, err)) return;
 
-			let totalScore = 0;
-			let count = 0;
-
-			cards.forEach((card) => {
-				const userScore = getUserScore(card.score, userId);
-				if (userScore > 0) {
-					totalScore += userScore;
-					count++;
-				}
-			});
-
-			const averageScore = count > 0 ? totalScore / count : 0;
+			const totalScore = cards.reduce((sum, card) => sum + getUserScore(card.score, userId), 0);
+			const count = rows.length;
 
 			callback({
 				count,
 				total: totalScore,
-				average: averageScore,
+				average: count > 0 ? totalScore / count : 0,
 			});
 		});
 	}
@@ -168,16 +158,8 @@ class DecksDatabase {
 					if (err) {
 						stats.push({ deck, count: undefined, total: undefined, average: undefined });
 					} else {
-						let total = 0;
-						let count = 0;
-
-						rows.forEach(({ score }) => {
-							const s = getUserScore(score, userId);
-							if (s > 0) {
-								total += s;
-								count++;
-							}
-						});
+						const total = rows.reduce((sum, card) => sum + getUserScore(card.score, userId), 0);
+						const count = rows.length;
 
 						stats.push({
 							deck,
