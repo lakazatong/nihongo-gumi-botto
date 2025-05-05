@@ -18,14 +18,14 @@ function startSession(deck, interval, user, resume) {
 		db.getOwners(interaction, deck, (owner_ids) => {
 			if (owner_ids.length === 0) {
 				user.send({
-					content: `Session: **${deck}** doesn't exist anymore.`,
+					content: `**${deck}** session: the deck doesn't exist anymore.`,
 					flags: MessageFlags.Ephemeral,
 				});
 				return;
 			}
 			if (!owner_ids.includes(userId)) {
 				user.send({
-					content: `Session: You are not the owner of **${deck}** anymore.`,
+					content: `**${deck}** session: You are not the owner anymore.`,
 					flags: MessageFlags.Ephemeral,
 				});
 				return;
@@ -33,7 +33,7 @@ function startSession(deck, interval, user, resume) {
 			db.getRandomCard(interaction, deck, userId, (card) => {
 				if (!card) {
 					user.send({
-						content: `**${deck}** empty.`,
+						content: `**${deck}** session: the deck is now empty.`,
 						flags: MessageFlags.Ephemeral,
 					});
 					return;
@@ -41,7 +41,14 @@ function startSession(deck, interval, user, resume) {
 
 				let message;
 
-				const timeoutId = setTimeout(() => message.edit(buildContent(card)), 30000);
+				const timeoutId = setTimeout(
+					() =>
+						message.edit({
+							content: buildContent(card),
+							flags: MessageFlags.Ephemeral,
+						}),
+					30000
+				);
 
 				const buttons = new ActionRowBuilder().addComponents(
 					getCorrectButton().setCustomId(`correct_${deck}_${card.id}_${timeoutId}`),
@@ -50,6 +57,7 @@ function startSession(deck, interval, user, resume) {
 
 				message = user.send({
 					content: buildContent(card),
+					flags: MessageFlags.Ephemeral,
 					components: [buttons],
 				});
 			});
@@ -60,7 +68,7 @@ function startSession(deck, interval, user, resume) {
 
 	if (resume) {
 		user.send({
-			content: `Resumed your learning session every **${interval}** minutes in **${deck}**.`,
+			content: `**${deck}** session: resumed with an interval of **${interval}** minutes.`,
 			flags: MessageFlags.Ephemeral,
 		});
 	}
@@ -133,7 +141,7 @@ async function callback(interaction, deck) {
 	startSession(deck, interval, user, false);
 
 	interaction.reply({
-		content: `Started a learning session every **${interval}** minutes in **${deck}**.`,
+		content: `Started a learning session every **${interval}** minutes for **${deck}**.`,
 		flags: MessageFlags.Ephemeral,
 	});
 }

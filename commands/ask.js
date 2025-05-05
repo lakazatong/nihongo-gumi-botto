@@ -19,7 +19,7 @@ async function callback(interaction, deck) {
 
 		const timeoutId = setTimeout(
 			async () =>
-				interaction.reply({
+				interaction.edit({
 					content: buildContent(card),
 					flags: MessageFlags.Ephemeral,
 				}),
