@@ -11,18 +11,18 @@ const getIncorrectButton = () =>
 async function callback(interaction) {
 	const [_, deck, id, timeoutId] = interaction.customId.split("_");
 	clearTimeout(timeoutId);
-	db.getCardById(interaction, deck, id, (row) => {
+	db.getCardById(interaction, deck, id, (card) => {
 		db.updateScoreById(
 			interaction,
 			deck,
 			id,
-			Math.max(0, getUserScore(row.score, interaction.user.id) - 1),
+			Math.max(0, getUserScore(card.score, interaction.user.id) - 1),
 			userId,
-			row.score,
+			card.score,
 			() => {
 				const button = new ActionRowBuilder().addComponents(getCorrectButton().setDisabled(true));
 				interaction.update({
-					content: buildContent(row, false),
+					content: buildContent(card, false),
 					components: [button],
 				});
 			}

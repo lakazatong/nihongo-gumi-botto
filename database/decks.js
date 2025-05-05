@@ -53,8 +53,8 @@ class DecksDatabase {
 	/* getters */
 
 	getOwners(interaction, deck, callback) {
-		this.db.all(`SELECT user_id FROM owners WHERE deck = ?`, [deck], (err, rows) => {
-			if (isOk(interaction, err)) callback(rows?.map((row) => row.user_id) || []);
+		this.db.all(`SELECT user_id FROM owners WHERE deck = ?`, [deck], (err, cards) => {
+			if (isOk(interaction, err)) callback(cards?.map((row) => row.user_id) || []);
 		});
 	}
 
@@ -123,8 +123,8 @@ class DecksDatabase {
 	}
 
 	getDecks(interaction, userId, callback) {
-		this.db.all(`SELECT deck FROM owners WHERE user_id = ?`, [userId], (err, rows) => {
-			if (isOk(interaction, err)) callback(rows?.map((row) => row.deck) || []);
+		this.db.all(`SELECT deck FROM owners WHERE user_id = ?`, [userId], (err, cards) => {
+			if (isOk(interaction, err)) callback(cards?.map((row) => row.deck) || []);
 		});
 	}
 
@@ -133,7 +133,7 @@ class DecksDatabase {
 			if (!isOk(interaction, err)) return;
 
 			const totalScore = cards.reduce((sum, card) => sum + getUserScore(card.score, userId), 0);
-			const count = rows.length;
+			const count = cards.length;
 
 			callback({
 				count,
@@ -154,12 +154,12 @@ class DecksDatabase {
 			}
 
 			decks.forEach((deck) => {
-				this.db.all(`SELECT score FROM ${deck}`, [], (err, rows) => {
+				this.db.all(`SELECT score FROM ${deck}`, [], (err, cards) => {
 					if (err) {
 						stats.push({ deck, count: undefined, total: undefined, average: undefined });
 					} else {
-						const total = rows.reduce((sum, card) => sum + getUserScore(card.score, userId), 0);
-						const count = rows.length;
+						const total = cards.reduce((sum, card) => sum + getUserScore(card.score, userId), 0);
+						const count = cards.length;
 
 						stats.push({
 							deck,

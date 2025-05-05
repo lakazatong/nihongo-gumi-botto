@@ -11,18 +11,18 @@ async function callback(interaction) {
 	const userId = interaction.user.id;
 	const [_, deck, id, timeoutId] = interaction.customId.split("_");
 	clearTimeout(timeoutId);
-	db.getCardById(interaction, deck, id, (row) => {
+	db.getCardById(interaction, deck, id, (card) => {
 		db.updateScoreById(
 			interaction,
 			deck,
 			id,
-			getUserScore(row.score, interaction.user.id) + 1,
+			getUserScore(card.score, interaction.user.id) + 1,
 			userId,
-			row.score,
+			card.score,
 			() => {
 				const button = new ActionRowBuilder().addComponents(getCorrectButton().setDisabled(true));
 				interaction.update({
-					content: buildContent(row, false),
+					content: buildContent(card, false),
 					components: [button],
 				});
 			}

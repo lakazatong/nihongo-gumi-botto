@@ -38,12 +38,12 @@ function withDeck(interaction, ownerCallback, noOwnerCallback) {
 	}
 }
 
-function buildContent(row, spoiler = true) {
+function buildContent(card, spoiler = true) {
 	const s = spoiler ? "||" : "";
-	const lines = [`${row.kanji}`, `${s}${row.reading}${s}`];
+	const lines = [`${card.kanji}`, `${s}${card.reading}${s}`];
 
 	lines.push(
-		`### Meanings\n${s}${row.meanings
+		`### Meanings\n${s}${card.meanings
 			.split(";")
 			.map((entry) => {
 				const [category, values] = entry.split(":");
@@ -57,15 +57,15 @@ function buildContent(row, spoiler = true) {
 			.join("\n")}${s}`
 	);
 
-	if (row.forms) {
-		const forms = row.forms
+	if (card.forms) {
+		const forms = card.forms
 			.split(",")
 			.map((f) => `- ${f}`)
 			.join("\n");
 		lines.push(`### Forms\n${s}${forms}${s}`);
 	}
 
-	if (row.example) lines.push(`### Example\n${s}${row.example}${s}`);
+	if (card.example) lines.push(`### Example\n${s}${card.example}${s}`);
 
 	return lines.join("\n");
 }
