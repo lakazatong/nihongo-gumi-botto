@@ -21,7 +21,7 @@ async function callback(interaction) {
 			userId,
 			card.score,
 			() => {
-				const button = new ActionRowBuilder().addComponents(getCorrectButton().setDisabled(true));
+				const button = new ActionRowBuilder().addComponents(getIncorrectButton().setDisabled(true));
 				interaction.update({
 					content: buildContent(card, false),
 					components: [button],
