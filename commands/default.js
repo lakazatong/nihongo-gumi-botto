@@ -15,11 +15,20 @@ async function callback(interaction) {
 					flags: MessageFlags.Ephemeral,
 				});
 			} else {
-				db.updateDefault(interaction, userId, deck, (response) => {
-					interaction.reply({
-						content: `Default deck set to **${deck}**.`,
-						flags: MessageFlags.Ephemeral,
-					});
+				db.getDefaultDeck(interaction, userId, (currentDeck) => {
+					if (currentDeck === deck) {
+						interaction.reply({
+							content: `Your default deck is already **${deck}**.`,
+							flags: MessageFlags.Ephemeral,
+						});
+					} else {
+						db.updateDefault(interaction, userId, deck, (response) => {
+							interaction.reply({
+								content: `Default deck set to **${deck}**.`,
+								flags: MessageFlags.Ephemeral,
+							});
+						});
+					}
 				});
 			}
 		});

@@ -54,15 +54,7 @@ class DecksDatabase {
 
 	updateDefault(interaction, userId, deck, callback) {
 		this.db.run(`INSERT OR IGNORE INTO defaults (user_id, deck) VALUES (?, ?)`, [userId, deck], function (err) {
-			if (!isOk(interaction, err)) return;
-			if (this.changes === 0) {
-				interaction.reply({
-					content: `Your default deck is already **${deck}**.`,
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-			callback?.(this);
+			if (isOk(interaction, err)) callback?.(this);
 		});
 	}
 

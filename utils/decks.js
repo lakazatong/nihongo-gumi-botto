@@ -7,7 +7,7 @@ function checkDeckOwnership(interaction, callback) {
 	const userId = interaction.user.id;
 
 	function help2(deck) {
-		db.ifOwner(interaction, userId, deck, callback);
+		db.ifOwner(interaction, userId, deck, () => callback(deck));
 	}
 
 	const deck = interaction.options.getString("deck") || null;
@@ -34,8 +34,7 @@ function checkOrCreateDeckOwnership(interaction, callback) {
 	function help2(deck) {
 		db.getOwners(interaction, deck, (owner_ids) => {
 			if (owner_ids.length === 0) {
-				db.addOwner(interaction, userId, deck);
-				callback(deck);
+				db.createDeck(interaction, userId, deck, () => callback(deck));
 			} else if (owner_ids.includes(userId)) {
 				callback(deck);
 			} else {
