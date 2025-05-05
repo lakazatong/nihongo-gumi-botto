@@ -2,7 +2,7 @@
 
 const { MessageFlags } = require("discord.js");
 const sqlite3 = require("sqlite3").verbose();
-const { isOk, getUserScore } = require("../utils/decks.js");
+const { isOk, getUserScore } = require("../utils/database.js");
 
 class DecksDatabase {
 	constructor(path = "./database/decks.db") {

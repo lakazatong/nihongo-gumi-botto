@@ -2,7 +2,8 @@
 
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const db = require("../database/decks.js");
-const { buildContent, getUserScore } = require("../utils/decks.js");
+const { buildContent } = require("../utils/decks.js");
+const { getUserScore } = require("../utils/database.js");
 
 const getCorrectButton = () => new ButtonBuilder().setCustomId("correct").setLabel("✅").setStyle(ButtonStyle.Success);
 
