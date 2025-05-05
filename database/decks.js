@@ -53,13 +53,9 @@ class DecksDatabase {
 	/* setters */
 
 	updateDefault(interaction, userId, deck, callback) {
-		this.db.run(
-			`INSERT INSERT OR REPLACE INTO defaults (user_id, deck) VALUES (?, ?)`,
-			[userId, deck],
-			function (err) {
-				if (isOk(interaction, err)) callback?.(this);
-			}
-		);
+		this.db.run(`INSERT OR REPLACE INTO defaults (user_id, deck) VALUES (?, ?)`, [userId, deck], function (err) {
+			if (isOk(interaction, err)) callback?.(this);
+		});
 	}
 
 	/* owners handling */
