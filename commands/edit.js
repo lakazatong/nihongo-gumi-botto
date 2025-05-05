@@ -12,10 +12,10 @@ async function callback(interaction, deck) {
 	db.getCardByKanji(interaction, deck, kanji, (card) => {
 		if (card) {
 			if (
-				card.reading === reading &&
-				card.meanings === meanings &&
-				card.forms === forms &&
-				card.example === example
+				(!reading || card.reading === reading) &&
+				(!meanings || card.meanings === meanings) &&
+				(!forms || card.forms === forms) &&
+				(!example || card.example === example)
 			) {
 				interaction.reply({
 					content: `No changes detected for **${kanji}** in **${deck}**.`,
