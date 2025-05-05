@@ -82,7 +82,7 @@ function startSession(deck, interval, user, resume) {
 
 	if (resume) {
 		user.send({
-			content: `Resumed your learning session every ${interval} minutes using deck ${deck}.`,
+			content: `Resumed your learning session every **${interval}** minutes using deck **${deck}**.`,
 			flags: MessageFlags.Ephemeral,
 		});
 	}
@@ -102,12 +102,12 @@ async function callback(interaction, deck) {
 			clearInterval(intervalId);
 			sessions.delete(getKey(userId, deck));
 			interaction.reply({
-				content: `Stopped your learning session for the deck ${deck}.`,
+				content: `Stopped your learning session for the deck **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 		} else {
 			interaction.reply({
-				content: `No active learning session to stop for the deck ${deck}.`,
+				content: `No active learning session to stop for the deck **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 		}
@@ -119,7 +119,7 @@ async function callback(interaction, deck) {
 	if (pause) {
 		if (!sessions.has(getKey(userId, deck))) {
 			interaction.reply({
-				content: `No active session to pause for the deck ${deck}.`,
+				content: `No active session to pause for the deck **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
@@ -128,7 +128,7 @@ async function callback(interaction, deck) {
 		clearInterval(intervalId);
 		sessions.delete(getKey(userId, deck));
 		interaction.reply({
-			content: `Paused your session for ${pause} minutes for the deck ${deck}.`,
+			content: `Paused your session for **${pause}** minutes for the deck **${deck}**.`,
 			flags: MessageFlags.Ephemeral,
 		});
 		setTimeout(() => {
@@ -155,7 +155,7 @@ async function callback(interaction, deck) {
 	startSession(deck, interval, user, false);
 
 	interaction.reply({
-		content: `Started a learning session every ${interval} minutes using deck ${deck}.`,
+		content: `Started a learning session every **${interval}** minutes using deck **${deck}**.`,
 		flags: MessageFlags.Ephemeral,
 	});
 }

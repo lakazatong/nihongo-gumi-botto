@@ -16,7 +16,7 @@ async function callback(interaction, deck) {
 		}
 
 		interaction.reply({
-			content: `${kanji} successfully removed from the deck ${deck}.`,
+			content: `${kanji} successfully removed from the deck **${deck}**.`,
 			flags: MessageFlags.Ephemeral,
 		});
 	});

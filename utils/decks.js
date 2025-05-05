@@ -36,11 +36,11 @@ function checkOrCreateDeckOwnership(interaction, callback) {
 			if (owner_ids.length === 0) {
 				db.addOwner(interaction, userId, deck);
 				callback(deck);
-			} else if (owner_ids.some((id) => id === userId)) {
+			} else if (owner_ids.includes(userId)) {
 				callback(deck);
 			} else {
 				interaction.reply({
-					content: `Your are not the owner of the deck ${deck}.`,
+					content: `Your are not the owner of the deck **${deck}**.`,
 					flags: MessageFlags.Ephemeral,
 				});
 			}

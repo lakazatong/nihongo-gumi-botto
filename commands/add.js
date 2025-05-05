@@ -12,7 +12,7 @@ async function callback(interaction, deck) {
 
 	db.addCard(interaction, deck, kanji, reading, meanings, forms, example, (response) => {
 		interaction.reply({
-			content: `Kanji ${kanji} added successfully to the deck ${deck}!`,
+			content: `Kanji **${kanji}** added successfully to the deck **${deck}**!`,
 			flags: MessageFlags.Ephemeral,
 		});
 	});

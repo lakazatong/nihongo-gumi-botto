@@ -10,12 +10,12 @@ async function callback(interaction, deck) {
 	db.addOwner(interaction, target.id, deck, (response) => {
 		if (response.changes > 0) {
 			interaction.reply({
-				content: `${target.username} now also has ownership of the deck ${deck}.`,
+				content: `${target.username} now also has ownership of the deck **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 		} else {
 			interaction.reply({
-				content: `${target.username} already has ownership of the deck ${deck}.`,
+				content: `${target.username} already has ownership of the deck **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 		}

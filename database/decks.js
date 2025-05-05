@@ -54,7 +54,15 @@ class DecksDatabase {
 
 	updateDefault(interaction, userId, deck, callback) {
 		this.db.run(`INSERT OR IGNORE INTO defaults (user_id, deck) VALUES (?, ?)`, [userId, deck], function (err) {
-			if (isOk(interaction, err)) callback?.(this);
+			if (!isOk(interaction, err)) return;
+			if (this.changes === 0) {
+				interaction.reply({
+					content: `Your default deck is already **${deck}**.`,
+					flags: MessageFlags.Ephemeral,
+				});
+				return;
+			}
+			callback?.(this);
 		});
 	}
 
@@ -74,7 +82,7 @@ class DecksDatabase {
 				callback(owner_ids);
 			} else {
 				interaction.reply({
-					content: `Deck ${deck} doesn't exist.`,
+					content: `Deck **${deck}** doesn't exist.`,
 					flags: MessageFlags.Ephemeral,
 				});
 			}
@@ -87,7 +95,7 @@ class DecksDatabase {
 				callback(owner_ids);
 			} else {
 				interaction.reply({
-					content: `Your are not the owner of the deck ${deck}.`,
+					content: `Your are not the owner of the deck **${deck}**.`,
 					flags: MessageFlags.Ephemeral,
 				});
 			}
@@ -221,7 +229,7 @@ class DecksDatabase {
 				if (!isOk(interaction, err)) return;
 				if (this.changes === 0) {
 					interaction.reply({
-						content: `The kanji ${kanji} already exists in the deck ${deck}.`,
+						content: `The kanji **${kanji}** already exists in the deck **${deck}**.`,
 						flags: MessageFlags.Ephemeral,
 					});
 					return;
@@ -236,7 +244,7 @@ class DecksDatabase {
 			if (!isOk(interaction, err)) return;
 			if (this.changes === 0) {
 				interaction.reply({
-					content: `The deck ${deck} is already empty.`,
+					content: `The deck **${deck}** is already empty.`,
 					flags: MessageFlags.Ephemeral,
 				});
 				return;
@@ -280,7 +288,7 @@ class DecksDatabase {
 			if (!isOk(interaction, err)) return;
 			if (this.changes === 0) {
 				interaction.reply({
-					content: `The kanji ${kanji} in deck ${deck} is unchanged.`,
+					content: `The kanji **${kanji}** in deck **${deck}** is unchanged.`,
 					flags: MessageFlags.Ephemeral,
 				});
 				return;
@@ -294,7 +302,7 @@ class DecksDatabase {
 			if (!isOk(interaction, err)) return;
 			if (this.changes === 0) {
 				interaction.reply({
-					content: `The kanji ${kanji} in deck ${deck} never existed.`,
+					content: `The kanji **${kanji}** in deck **${deck}** never existed.`,
 					flags: MessageFlags.Ephemeral,
 				});
 				return;

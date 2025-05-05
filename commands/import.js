@@ -75,11 +75,11 @@ async function callback(interaction, deck) {
 
 		if (errorKanji.length > 0) {
 			interaction.editReply({
-				content: `The following kanjis failed to be added to the deck ${deck}:\n${errorKanji.join(", ")}`,
+				content: `The following kanjis failed to be added to the deck **${deck}**:\n${errorKanji.join(", ")}`,
 			});
 		} else {
 			interaction.editReply({
-				content: `All kanjis of ${filename} were successfully loaded into the deck ${deck}!`,
+				content: `All kanjis of **${filename}** were successfully loaded into the deck **${deck}**!`,
 			});
 		}
 	} catch (err) {

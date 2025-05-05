@@ -66,18 +66,16 @@ client.once("ready", () => {
 
 client.on("interactionCreate", async (interaction) => {
 	if (interaction.isCommand()) {
-		const { callback } = require("./commands/" + interaction.commandName + ".js");
-		if (callback) {
-			if (["default", "help", "ping"].includes(interaction.commandName)) {
-				callback(interaction);
-			} else {
-				(["add", "load"].includes(interaction.commandName) ? checkOrCreateDeckOwnership : checkDeckOwnership)(
-					interaction,
-					(deck) => {
-						callback(interaction, deck);
-					}
-				);
-			}
+		const { data, callback } = require("./commands/" + interaction.commandName + ".js");
+		if (data?.options?.some?.((opt) => opt.name === "deck") && interaction.commandName !== "default") {
+			(["add", "import"].includes(interaction.commandName) ? checkOrCreateDeckOwnership : checkDeckOwnership)(
+				interaction,
+				(deck) => {
+					callback(interaction, deck);
+				}
+			);
+		} else {
+			callback(interaction);
 		}
 	} else if (interaction.isButton()) {
 		const [action, _] = interaction.customId.split("_");

@@ -7,40 +7,37 @@ async function callback(interaction) {
 	const userId = interaction.user.id;
 	const deck = interaction.options.getString("deck");
 
-	if (!deck) {
+	if (deck) {
+		db.getOwners(interaction, userId, deck, (owner_ids) => {
+			if (owner_ids.length > 0 && !owner_ids.includes(userId)) {
+				interaction.reply({
+					content: `Your are not the owner of the deck **${deck}**.`,
+					flags: MessageFlags.Ephemeral,
+				});
+			} else {
+				db.updateDefault(interaction, userId, deck, (response) => {
+					interaction.reply({
+						content: `Default deck set to **${deck}**.`,
+						flags: MessageFlags.Ephemeral,
+					});
+				});
+			}
+		});
+	} else {
 		db.getDefaultDeck(interaction, userId, (deck) => {
-			if (!deck) {
+			if (deck) {
+				interaction.reply({
+					content: `Your default deck is **${deck}**.`,
+					flags: MessageFlags.Ephemeral,
+				});
+			} else {
 				interaction.reply({
 					content: "You have no default deck.",
 					flags: MessageFlags.Ephemeral,
 				});
-				return;
 			}
-
-			interaction.reply({
-				content: `Your default deck is ${deck}.`,
-				flags: MessageFlags.Ephemeral,
-			});
 		});
-		return;
 	}
-
-	db.isOwner(interaction, userId, deck, (bool) => {
-		if (bool === false) {
-			interaction.reply({
-				content: "You are not the owner of this deck.",
-				flags: MessageFlags.Ephemeral,
-			});
-			return;
-		}
-
-		db.updateDefault(interaction, userId, deck, (response) => {
-			interaction.reply({
-				content: `Default deck set to ${deck}.`,
-				flags: MessageFlags.Ephemeral,
-			});
-		});
-	});
 }
 
 module.exports = {
