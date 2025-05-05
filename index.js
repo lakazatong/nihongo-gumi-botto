@@ -2,13 +2,13 @@
 
 const fs = require("fs");
 
-const { Client, GatewayIntentBits, REST, Routes, Partials } = require("discord.js");
-const { checkDeckOwnership, checkOrCreateDeckOwnership } = require("./utils/decks.js");
+const { Client, GatewayIntentBits, REST, Routes, Partials, MessageFlags } = require("discord.js");
+const { withDeck } = require("./utils/decks.js");
+const db = require("./database/decks.js");
 
 require("dotenv").config();
 
-// long requires
-require("./database/decks.js");
+// cache long require
 require("./utils/anki_importer.js");
 
 const client = new Client({
@@ -68,11 +68,19 @@ client.on("interactionCreate", async (interaction) => {
 	if (interaction.isCommand()) {
 		const { data, callback } = require("./commands/" + interaction.commandName + ".js");
 		if (data?.options?.some?.((opt) => opt.name === "deck") && interaction.commandName !== "default") {
-			(["add", "import"].includes(interaction.commandName) ? checkOrCreateDeckOwnership : checkDeckOwnership)(
+			withDeck(
 				interaction,
-				(deck) => {
-					callback(interaction, deck);
-				}
+				(deck) => callback(interaction, deck),
+				["add", "import"].includes(interaction.commandName)
+					? (deck) => {
+							db.createDeck(interaction, userId, deck, () => callback(interaction, deck));
+					  }
+					: (deck) => {
+							interaction.reply({
+								content: `**${deck}** doesn't exist.`,
+								flags: MessageFlags.Ephemeral,
+							});
+					  }
 			);
 		} else {
 			callback(interaction);

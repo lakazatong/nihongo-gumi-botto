@@ -68,14 +68,6 @@ class DecksDatabase {
 		});
 	}
 
-	deckExists(interaction, deck, callback) {
-		this.getOwners(interaction, deck, (owner_ids) => callback(owner_ids.length > 0));
-	}
-
-	isOwner(interaction, userId, deck, callback) {
-		this.getOwners(interaction, deck, (owner_ids) => callback(owner_ids.includes(userId)));
-	}
-
 	/* setters */
 
 	addOwner(interaction, userId, deck, callback) {

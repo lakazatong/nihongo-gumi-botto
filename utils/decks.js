@@ -3,59 +3,31 @@
 const { MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
 
-function checkDeckOwnership(interaction, callback) {
+function withDeck(interaction, ownerCallback, noOwnerCallback) {
 	const userId = interaction.user.id;
-
-	function help2(deck) {
-		db.isOwner(interaction, userId, deck, (bool) => {
-			if (bool) callback(deck);
-		});
-	}
-
 	const deck = interaction.options.getString("deck") || null;
 
-	if (deck) {
-		help2(deck);
-	} else {
-		db.getDefaultDeck(interaction, userId, (defaultDeck) => {
-			if (defaultDeck) {
-				help2(defaultDeck);
-			} else {
-				interaction.reply({
-					content: "No deck was given and no default deck was set.",
-					flags: MessageFlags.Ephemeral,
-				});
-			}
-		});
-	}
-}
-
-function checkOrCreateDeckOwnership(interaction, callback) {
-	const userId = interaction.user.id;
-
-	function help2(deck) {
-		db.getOwners(interaction, deck, (owner_ids) => {
+	function help(deck) {
+		db.getOwners(interaction, userId, deck, (owner_ids) => {
 			if (owner_ids.length === 0) {
-				db.createDeck(interaction, userId, deck, () => callback(deck));
+				noOwnerCallback(deck);
 			} else if (owner_ids.includes(userId)) {
-				callback(deck);
+				ownerCallback(deck);
 			} else {
 				interaction.reply({
-					content: `Your are not the owner of the deck **${deck}**.`,
+					content: `You are not the owner of **${deck}**.`,
 					flags: MessageFlags.Ephemeral,
 				});
 			}
 		});
 	}
 
-	const deck = interaction.options.getString("deck") || null;
-
 	if (deck) {
-		help2(deck);
+		help(deck);
 	} else {
 		db.getDefaultDeck(interaction, userId, (defaultDeck) => {
 			if (defaultDeck) {
-				help2(defaultDeck);
+				help(defaultDeck);
 			} else {
 				interaction.reply({
 					content: "No deck was given and no default deck was set.",
@@ -130,8 +102,7 @@ async function getTargetUser(interaction) {
 }
 
 module.exports = {
-	checkDeckOwnership,
-	checkOrCreateDeckOwnership,
+	withDeck,
 	buildContent,
 	getTargetUser,
 };
