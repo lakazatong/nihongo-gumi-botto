@@ -104,7 +104,7 @@ function saveCardsToJson(file) {
 	}
 }
 
-saveCardsToJson("./Default.txt");
+// saveCardsToJson("./Default.txt");
 
 module.exports = {
 	saveCardsToJson,
