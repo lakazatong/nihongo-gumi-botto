@@ -9,6 +9,7 @@ const getIncorrectButton = () =>
 	new ButtonBuilder().setCustomId("incorrect").setLabel("❌").setStyle(ButtonStyle.Danger);
 
 async function callback(interaction) {
+	const userId = interaction.user.id;
 	const [_, deck, id, timeoutId] = interaction.customId.split("_");
 	clearTimeout(timeoutId);
 	db.getCardById(interaction, deck, id, (card) => {
