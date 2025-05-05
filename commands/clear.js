@@ -4,9 +4,9 @@ const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
 
 async function callback(interaction, deck) {
-	db.clearDeck(interaction, deck, (response) => {
+	db.clearDeck(interaction, deck, () => {
 		interaction.reply({
-			content: "Deck cleared successfully!",
+			content: `**${deck}** cleared successfully.`,
 			flags: MessageFlags.Ephemeral,
 		});
 	});

@@ -68,30 +68,12 @@ class DecksDatabase {
 		});
 	}
 
-	ifDeckExists(interaction, deck, callback) {
-		this.getOwners(interaction, deck, (owner_ids) => {
-			if (owner_ids.length > 0) {
-				callback(owner_ids);
-			} else {
-				interaction.reply({
-					content: `Deck **${deck}** doesn't exist.`,
-					flags: MessageFlags.Ephemeral,
-				});
-			}
-		});
+	deckExists(interaction, deck, callback) {
+		this.getOwners(interaction, deck, (owner_ids) => callback(owner_ids.length > 0));
 	}
 
-	ifOwner(interaction, userId, deck, callback) {
-		this.ifDeckExists(interaction, deck, (owner_ids) => {
-			if (owner_ids.some((id) => id === userId)) {
-				callback(owner_ids);
-			} else {
-				interaction.reply({
-					content: `Your are not the owner of the deck **${deck}**.`,
-					flags: MessageFlags.Ephemeral,
-				});
-			}
-		});
+	isOwner(interaction, userId, deck, callback) {
+		this.getOwners(interaction, deck, (owner_ids) => callback(owner_ids.includes(userId)));
 	}
 
 	/* setters */
@@ -119,58 +101,26 @@ class DecksDatabase {
 	/* getters */
 
 	getRandomCard(interaction, deck, callback) {
-		this.db.get(`SELECT * FROM ${deck} ORDER BY RANDOM() LIMIT 1`, [deck], (err, row) => {
-			if (!isOk(interaction, err)) return;
-			if (!row) {
-				interaction.reply({
-					content: "Empty deck.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-			callback(row);
+		this.db.get(`SELECT * FROM ${deck} ORDER BY RANDOM() LIMIT 1`, [deck], (err, card) => {
+			if (isOk(interaction, err)) callback(card);
 		});
 	}
 
 	getCardById(interaction, deck, id, callback) {
-		this.db.get(`SELECT * FROM ${deck} WHERE id = ?`, [id], (err, row) => {
-			if (!isOk(interaction, err)) return;
-			if (!row) {
-				interaction.reply({
-					content: `No card with id ${id}.`,
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-			callback(row);
+		this.db.get(`SELECT * FROM ${deck} WHERE id = ?`, [id], (err, card) => {
+			if (isOk(interaction, err)) callback(card);
 		});
 	}
 
 	getCardByKanji(interaction, deck, kanji, callback) {
-		this.db.get(`SELECT * FROM ${deck} WHERE kanji = ?`, [kanji], (err, row) => {
-			if (!isOk(interaction, err)) return;
-			if (!row) {
-				interaction.reply({
-					content: `No card with kanji ${kanji}.`,
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-			callback(row);
+		this.db.get(`SELECT * FROM ${deck} WHERE kanji = ?`, [kanji], (err, card) => {
+			if (isOk(interaction, err)) callback(card);
 		});
 	}
 
 	getDecks(interaction, userId, callback) {
 		this.db.all(`SELECT deck FROM owners WHERE user_id = ?`, [userId], (err, rows) => {
-			if (!isOk(interaction, err)) return;
-			if (!rows || rows.length === 0) {
-				interaction.reply({
-					content: `You don't own any decks.`,
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-			callback(rows.map((row) => row.deck));
+			if (isOk(interaction, err)) callback(rows?.map((row) => row.deck) || []);
 		});
 	}
 
@@ -218,30 +168,14 @@ class DecksDatabase {
 			`INSERT OR IGNORE INTO ${deck} (kanji, reading, meanings, forms, example) VALUES (?, ?, ?, ?, ?)`,
 			[kanji, reading, meanings, forms, example],
 			function (err) {
-				if (!isOk(interaction, err)) return;
-				if (this.changes === 0) {
-					interaction.reply({
-						content: `The kanji **${kanji}** already exists in the deck **${deck}**.`,
-						flags: MessageFlags.Ephemeral,
-					});
-					return;
-				}
-				callback?.(this);
+				if (isOk(interaction, err)) callback?.(this);
 			}
 		);
 	}
 
 	clearDeck(interaction, deck, callback) {
 		this.db.run(`DELETE FROM ${deck}`, [], function (err) {
-			if (!isOk(interaction, err)) return;
-			if (this.changes === 0) {
-				interaction.reply({
-					content: `The deck **${deck}** is already empty.`,
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-			callback?.(this);
+			if (isOk(interaction, err)) callback?.(this);
 		});
 	}
 
@@ -277,43 +211,19 @@ class DecksDatabase {
 		values.push(kanji);
 
 		this.db.run(`UPDATE ${deck} SET ${fields.join(", ")} WHERE kanji = ?`, values, function (err) {
-			if (!isOk(interaction, err)) return;
-			if (this.changes === 0) {
-				interaction.reply({
-					content: `The kanji **${kanji}** in deck **${deck}** is unchanged.`,
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-			callback?.(this);
+			if (isOk(interaction, err)) callback?.(this);
 		});
 	}
 
-	deleteCard(interaction, deck, kanji, callback) {
+	deleteCardByKanji(interaction, deck, kanji, callback) {
 		this.db.run(`DELETE FROM ${deck} WHERE kanji = ?`, [kanji], function (err) {
-			if (!isOk(interaction, err)) return;
-			if (this.changes === 0) {
-				interaction.reply({
-					content: `The kanji **${kanji}** in deck **${deck}** never existed.`,
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-			callback?.(this);
+			if (isOk(interaction, err)) callback?.(this);
 		});
 	}
 
 	updateScoreById(interaction, deck, id, newScore, callback) {
 		this.db.run(`UPDATE ${deck} SET score = ? WHERE id = ?`, [newScore, id], function (err) {
-			if (!isOk(interaction, err)) return;
-			if (this.changes === 0) {
-				interaction.reply({
-					content: `The score is unchanged.`,
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-			callback?.(this);
+			if (isOk(interaction, err)) callback?.(this);
 		});
 	}
 

@@ -38,14 +38,24 @@ async function callback(interaction, deck) {
 			return;
 		}
 		const fileContent = fs.readFileSync(cardsPath, "utf-8");
-		const errorKanji = [];
+
+		fs.unlink(cardsPath, (err) => {
+			if (err) {
+				console.error("fs.unlink", err);
+			}
+		});
+		fs.unlink(filename, (err) => {
+			if (err) {
+				console.error("fs.unlink", err);
+			}
+		});
+
+		const errKanjis = [];
 
 		JSON.parse(fileContent).forEach(({ kanji, reading, meanings, forms, example }) => {
 			db.db.run(
-				`INSERT OR REPLACE INTO decks (deck, kanji, reading, meanings, forms, example)
-						 VALUES (?, ?, ?, ?, ?, ?)`,
+				`INSERT OR REPLACE INTO ${deck} (kanji, reading, meanings, forms, example) VALUES (?, ?, ?, ?, ?)`,
 				[
-					deck,
 					kanji,
 					reading,
 					Object.entries(meanings)
@@ -54,38 +64,45 @@ async function callback(interaction, deck) {
 					forms.join(",") || null,
 					example || null,
 				],
-				(err) => {
-					errorKanji.push(kanji);
+				function (err) {
+					if (err) {
+						errKanjis.push({
+							kanji,
+							message: err?.message || "An error occurred with sqlite.",
+						});
+					}
 				}
 			);
 		});
 
-		// await Promise.all([
-		// 	fs.unlink(cardsPath, (err) => {
-		// 		if (err) {
-		// 			console.error("fs.unlink", err);
-		// 		}
-		// 	}),
-		// 	fs.unlink(filename, (err) => {
-		// 		if (err) {
-		// 			console.error("fs.unlink", err);
-		// 		}
-		// 	}),
-		// ]);
+		if (errKanjis.length > 0) {
+			let replyContent = `The following kanjis failed to be added to **${deck}**:\n`;
+			let currentLength = replyContent.length;
 
-		if (errorKanji.length > 0) {
+			for (let i = 0; i < errKanjis.length; i++) {
+				const errorMessage = `- **${errKanjis[i].kanji}**: ${errKanjis[i].message}\n`;
+
+				if (currentLength + errorMessage.length <= 2000) {
+					replyContent += errorMessage;
+					currentLength += errorMessage.length;
+				} else {
+					break;
+				}
+			}
+
 			interaction.editReply({
-				content: `The following kanjis failed to be added to the deck **${deck}**:\n${errorKanji.join(", ")}`,
+				content: replyContent,
+				flags: MessageFlags.Ephemeral,
 			});
 		} else {
 			interaction.editReply({
-				content: `All kanjis of **${filename}** were successfully imported into the deck **${deck}**!`,
+				content: `All kanjis of **${filename}** were successfully imported into **${deck}**.`,
+				flags: MessageFlags.Ephemeral,
 			});
 		}
 	} catch (err) {
-		console.error("import", err);
 		interaction.editReply({
-			content: "An error occurred while getting the file.",
+			content: "An error occurred while downloading or processing the file.",
 			flags: MessageFlags.Ephemeral,
 		});
 	}

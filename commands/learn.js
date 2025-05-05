@@ -13,42 +13,25 @@ function getKey(id, deck) {
 }
 
 function startSession(deck, interval, user, resume) {
+	const userId = user.id;
 	function ask() {
-		db.db.get(`SELECT * FROM owners WHERE deck = ?`, [deck], (err, row) => {
-			if (err) {
-				console.error("get", err);
+		db.getOwners(interaction, userId, deck, (owner_ids) => {
+			if (owner_ids.length === 0) {
 				user.send({
-					content: "Session: An error occurred with sqlite.",
+					content: `Session: **${deck}** doesn't exist anymore.`,
 					flags: MessageFlags.Ephemeral,
 				});
 				return;
 			}
-			const owner_id = row?.user_id || null;
-			if (owner_id === null) {
+			if (!owner_ids.includes(userId)) {
 				user.send({
-					content: "Session: The deck does not exist anymore.",
+					content: `Session: You are not the owner of **${deck}** anymore.`,
 					flags: MessageFlags.Ephemeral,
 				});
 				return;
 			}
-			if (owner_id !== user.id) {
-				user.send({
-					content: "Session: You are not the owner of this deck anymore.",
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-			db.db.get("SELECT * FROM decks WHERE deck = ? ORDER BY RANDOM() LIMIT 1", [deck], async (err, row) => {
-				if (err) {
-					console.error("get", err);
-					user.send({
-						content: "Session: An error occurred with sqlite.",
-						flags: MessageFlags.Ephemeral,
-					});
-					return;
-				}
-
-				if (!row) {
+			db.getRandomCard(interaction, deck, (card) => {
+				if (!card) {
 					user.send({
 						content: "Session: Empty deck.",
 						flags: MessageFlags.Ephemeral,
@@ -58,31 +41,26 @@ function startSession(deck, interval, user, resume) {
 
 				let message;
 
-				const timeoutId = setTimeout(() => {
-					message.edit({
-						content: buildContent(row),
-						components: [],
-					});
-				}, 30000);
+				const timeoutId = setTimeout(() => message.edit(buildContent(card)), 30000);
 
 				const buttons = new ActionRowBuilder().addComponents(
-					getCorrectButton().setCustomId(`correct_${deck}_${row.id}_${timeoutId}`),
-					getIncorrectButton().setCustomId(`incorrect_${deck}_${row.id}_${timeoutId}`)
+					getCorrectButton().setCustomId(`correct_${deck}_${card.id}_${timeoutId}`),
+					getIncorrectButton().setCustomId(`incorrect_${deck}_${card.id}_${timeoutId}`)
 				);
 
-				message = await user.send({
-					content: buildContent(row),
+				message = user.send({
+					content: buildContent(card),
 					components: [buttons],
 				});
 			});
 		});
 	}
 
-	sessions.set(getKey(user.id, deck), [interval, setInterval(ask, interval * 60000)]);
+	sessions.set(getKey(userId, deck), [interval, setInterval(ask, interval * 60000)]);
 
 	if (resume) {
 		user.send({
-			content: `Resumed your learning session every **${interval}** minutes using deck **${deck}**.`,
+			content: `Resumed your learning session every **${interval}** minutes in **${deck}**.`,
 			flags: MessageFlags.Ephemeral,
 		});
 	}
@@ -102,12 +80,12 @@ async function callback(interaction, deck) {
 			clearInterval(intervalId);
 			sessions.delete(getKey(userId, deck));
 			interaction.reply({
-				content: `Stopped your learning session for the deck **${deck}**.`,
+				content: `Stopped your learning session for **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 		} else {
 			interaction.reply({
-				content: `No active learning session to stop for the deck **${deck}**.`,
+				content: `No active learning session to stop for **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 		}
@@ -119,7 +97,7 @@ async function callback(interaction, deck) {
 	if (pause) {
 		if (!sessions.has(getKey(userId, deck))) {
 			interaction.reply({
-				content: `No active session to pause for the deck **${deck}**.`,
+				content: `No active session to pause for **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
@@ -128,7 +106,7 @@ async function callback(interaction, deck) {
 		clearInterval(intervalId);
 		sessions.delete(getKey(userId, deck));
 		interaction.reply({
-			content: `Paused your session for **${pause}** minutes for the deck **${deck}**.`,
+			content: `Paused your session for **${pause}** minutes for **${deck}**.`,
 			flags: MessageFlags.Ephemeral,
 		});
 		setTimeout(() => {
@@ -155,7 +133,7 @@ async function callback(interaction, deck) {
 	startSession(deck, interval, user, false);
 
 	interaction.reply({
-		content: `Started a learning session every **${interval}** minutes using deck **${deck}**.`,
+		content: `Started a learning session every **${interval}** minutes in **${deck}**.`,
 		flags: MessageFlags.Ephemeral,
 	});
 }

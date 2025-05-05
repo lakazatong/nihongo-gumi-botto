@@ -6,7 +6,7 @@ const db = require("../database/decks.js");
 async function callback(interaction, deck) {
 	db.dropDeck(interaction, deck, () => {
 		interaction.reply({
-			content: `The deck **${deck}** was successfully dropped.`,
+			content: `**${deck}** dropped successfully.`,
 			flags: MessageFlags.Ephemeral,
 		});
 	});

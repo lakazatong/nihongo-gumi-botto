@@ -10,11 +10,20 @@ async function callback(interaction, deck) {
 	const forms = interaction.options.getString("forms") || null;
 	const example = interaction.options.getString("example") || null;
 
-	db.addCard(interaction, deck, kanji, reading, meanings, forms, example, (response) => {
-		interaction.reply({
-			content: `Kanji **${kanji}** added successfully to the deck **${deck}**!`,
-			flags: MessageFlags.Ephemeral,
-		});
+	db.getCardByKanji(interaction, deck, kanji, (card) => {
+		if (card) {
+			interaction.reply({
+				content: `**${kanji}** already exists in **${deck}**.`,
+				flags: MessageFlags.Ephemeral,
+			});
+		} else {
+			db.addCard(interaction, deck, kanji, reading, meanings, forms, example, () => {
+				interaction.reply({
+					content: `**${kanji}** added successfully to **${deck}**.`,
+					flags: MessageFlags.Ephemeral,
+				});
+			});
+		}
 	});
 }
 

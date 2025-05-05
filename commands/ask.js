@@ -1,27 +1,30 @@
 "use strict";
 
-const { SlashCommandBuilder, ActionRowBuilder } = require("discord.js");
+const { SlashCommandBuilder, ActionRowBuilder, MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
 const { getCorrectButton } = require("../buttons/correct.js");
 const { getIncorrectButton } = require("../buttons/incorrect.js");
 const { buildContent } = require("../utils/decks.js");
 
 async function callback(interaction, deck) {
-	db.getRandomCard(interaction, deck, (row) => {
-		const timeoutId = setTimeout(async () => {
+	db.getRandomCard(interaction, deck, (card) => {
+		if (!card) {
 			interaction.reply({
-				content: buildContent(row),
-				components: [],
+				content: `**${deck}** empty.`,
+				flags: MessageFlags.Ephemeral,
 			});
-		}, 30000);
+			return;
+		}
+
+		const timeoutId = setTimeout(async () => interaction.reply(buildContent(card)), 30000);
 
 		const buttons = new ActionRowBuilder().addComponents(
-			getCorrectButton().setCustomId(`correct_${deck}_${row.id}_${timeoutId}`),
-			getIncorrectButton().setCustomId(`incorrect_${deck}_${row.id}_${timeoutId}`)
+			getCorrectButton().setCustomId(`correct_${deck}_${card.id}_${timeoutId}`),
+			getIncorrectButton().setCustomId(`incorrect_${deck}_${card.id}_${timeoutId}`)
 		);
 
 		interaction.reply({
-			content: buildContent(row),
+			content: buildContent(card),
 			components: [buttons],
 		});
 	});

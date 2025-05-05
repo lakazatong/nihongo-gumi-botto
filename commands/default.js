@@ -11,12 +11,12 @@ async function callback(interaction) {
 		db.getOwners(interaction, deck, (owner_ids) => {
 			if (owner_ids.length > 0 && !owner_ids.includes(userId)) {
 				interaction.reply({
-					content: `Your are not the owner of the deck **${deck}**.`,
+					content: `Your are not the owner of **${deck}**.`,
 					flags: MessageFlags.Ephemeral,
 				});
 			} else {
-				db.getDefaultDeck(interaction, userId, (currentDeck) => {
-					if (currentDeck === deck) {
+				db.getDefaultDeck(interaction, userId, (defaultDeck) => {
+					if (defaultDeck === deck) {
 						interaction.reply({
 							content: `Your default deck is already **${deck}**.`,
 							flags: MessageFlags.Ephemeral,
@@ -33,10 +33,10 @@ async function callback(interaction) {
 			}
 		});
 	} else {
-		db.getDefaultDeck(interaction, userId, (deck) => {
-			if (deck) {
+		db.getDefaultDeck(interaction, userId, (defaultDeck) => {
+			if (defaultDeck) {
 				interaction.reply({
-					content: `Your default deck is **${deck}**.`,
+					content: `Your default deck is **${defaultDeck}**.`,
 					flags: MessageFlags.Ephemeral,
 				});
 			} else {

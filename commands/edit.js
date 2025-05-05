@@ -9,13 +9,32 @@ async function callback(interaction, deck) {
 	const meanings = interaction.options.getString("meanings") || null;
 	const forms = interaction.options.getString("forms") || null;
 	const example = interaction.options.getString("example") || null;
-	db.getCardByKanji(interaction, deck, kanji, (row) => {
-		db.updateCard(interaction, deck, kanji, reading, meanings, forms, example, (response) => {
+	db.getCardByKanji(interaction, deck, kanji, (card) => {
+		if (card) {
+			if (
+				card.reading === reading &&
+				card.meanings === meanings &&
+				card.forms === forms &&
+				card.example === example
+			) {
+				interaction.reply({
+					content: `No changes detected for **${kanji}** in **${deck}**.`,
+					flags: MessageFlags.Ephemeral,
+				});
+			} else {
+				db.updateCard(interaction, deck, kanji, reading, meanings, forms, example, () => {
+					interaction.reply({
+						content: `**${kanji}** in **${deck}** updated successfully.`,
+						flags: MessageFlags.Ephemeral,
+					});
+				});
+			}
+		} else {
 			interaction.reply({
-				content: "Kanji updated successfully!",
+				content: `**${kanji}** doesn't exist in **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
-		});
+		}
 	});
 }
 

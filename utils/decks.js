@@ -7,7 +7,9 @@ function checkDeckOwnership(interaction, callback) {
 	const userId = interaction.user.id;
 
 	function help2(deck) {
-		db.ifOwner(interaction, userId, deck, () => callback(deck));
+		db.isOwner(interaction, userId, deck, (bool) => {
+			if (bool) callback(deck);
+		});
 	}
 
 	const deck = interaction.options.getString("deck") || null;

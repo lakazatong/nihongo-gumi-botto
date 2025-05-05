@@ -8,14 +8,14 @@ async function callback(interaction, deck) {
 	const target = await getTargetUser(interaction);
 	if (!target) return;
 	db.removeOwner(interaction, target.id, deck, (response) => {
-		if (response.changes > 0) {
+		if (response.changes === 0) {
 			interaction.reply({
-				content: `${target.username} no longer has ownership of the deck **${deck}**.`,
+				content: `**${target.username}** never had ownership of **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 		} else {
 			interaction.reply({
-				content: `${target.username} never had ownership of the deck **${deck}**.`,
+				content: `**${target.username}** no longer has ownership of **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 		}

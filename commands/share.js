@@ -7,15 +7,16 @@ const { getTargetUser } = require("../utils/decks.js");
 async function callback(interaction, deck) {
 	const target = await getTargetUser(interaction);
 	if (!target) return;
+	db.getOwners;
 	db.addOwner(interaction, target.id, deck, (response) => {
-		if (response.changes > 0) {
+		if (response.changes === 0) {
 			interaction.reply({
-				content: `${target.username} now also has ownership of the deck **${deck}**.`,
+				content: `**${target.username}** already has ownership of **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 		} else {
 			interaction.reply({
-				content: `${target.username} already has ownership of the deck **${deck}**.`,
+				content: `**${target.username}** now also has ownership of **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 		}

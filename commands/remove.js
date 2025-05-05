@@ -6,19 +6,18 @@ const db = require("../database/decks.js");
 async function callback(interaction, deck) {
 	const kanji = interaction.options.getString("kanji");
 
-	db.deleteCard(interaction, deck, kanji, (response) => {
+	db.deleteCardByKanji(interaction, deck, kanji, (response) => {
 		if (response.changes === 0) {
 			interaction.reply({
-				content: "No matching kanji found in the specified deck.",
+				content: `**${kanji}** doesn't exist in **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
-			return;
+		} else {
+			interaction.reply({
+				content: `**${kanji}** successfully removed from **${deck}**.`,
+				flags: MessageFlags.Ephemeral,
+			});
 		}
-
-		interaction.reply({
-			content: `${kanji} successfully removed from the deck **${deck}**.`,
-			flags: MessageFlags.Ephemeral,
-		});
 	});
 }
 
