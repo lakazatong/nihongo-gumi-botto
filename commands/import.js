@@ -79,7 +79,7 @@ async function callback(interaction, deck) {
 			});
 		} else {
 			interaction.editReply({
-				content: `All kanjis of **${filename}** were successfully loaded into the deck **${deck}**!`,
+				content: `All kanjis of **${filename}** were successfully imported into the deck **${deck}**!`,
 			});
 		}
 	} catch (err) {
