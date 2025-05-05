@@ -5,6 +5,7 @@ const db = require("../database/decks.js");
 const { getCorrectButton } = require("../buttons/correct.js");
 const { getIncorrectButton } = require("../buttons/incorrect.js");
 const { buildContent } = require("../utils/decks.js");
+const { getUserScore } = require("../utils/database.js");
 
 const sessions = new Map();
 
@@ -15,7 +16,17 @@ function getKey(id, deck) {
 function startSession(deck, interval, user, resume) {
 	const userId = user.id;
 	function ask() {
-		db.getOwners(interaction, deck, (owner_ids) => {
+		db.db.all(`SELECT user_id FROM owners WHERE deck = ?`, [deck], (err, cards) => {
+			if (err) {
+				user.send({
+					content: `**${deck}** session: ` + (err?.message || `an error occurred with sqlite.`),
+					flags: MessageFlags.Ephemeral,
+				});
+				return;
+			}
+
+			const owner_ids = cards?.map((row) => row.user_id) || [];
+
 			if (owner_ids.length === 0) {
 				user.send({
 					content: `**${deck}** session: the deck doesn't exist anymore.`,
@@ -23,6 +34,7 @@ function startSession(deck, interval, user, resume) {
 				});
 				return;
 			}
+
 			if (!owner_ids.includes(userId)) {
 				user.send({
 					content: `**${deck}** session: You are not the owner anymore.`,
@@ -30,7 +42,8 @@ function startSession(deck, interval, user, resume) {
 				});
 				return;
 			}
-			db.getRandomCard(interaction, deck, userId, (card) => {
+
+			function help(card) {
 				if (!card) {
 					user.send({
 						content: `**${deck}** session: the deck is now empty.`,
@@ -61,6 +74,39 @@ function startSession(deck, interval, user, resume) {
 					flags: MessageFlags.Ephemeral,
 					components: [buttons],
 				});
+			}
+
+			db.db.all(`SELECT * FROM ${deck}`, [], (err, cards) => {
+				if (err) {
+					user.send({
+						content: `**${deck}** session: ` + (err?.message || `an error occurred with sqlite.`),
+						flags: MessageFlags.Ephemeral,
+					});
+					return;
+				}
+
+				if (!cards || cards.length === 0) {
+					help();
+					return;
+				}
+
+				const weights = cards.map((card) => {
+					const userScore = getUserScore(card.score, userId);
+					return 1 / (userScore + 1);
+				});
+
+				const totalWeight = weights.reduce((a, b) => a + b, 0);
+				const thresholds = [];
+				let acc = 0;
+
+				for (let w of weights) {
+					acc += w / totalWeight;
+					thresholds.push(acc);
+				}
+
+				const r = Math.random();
+				const index = thresholds.findIndex((t) => r <= t);
+				help(cards[index]);
 			});
 		});
 	}
