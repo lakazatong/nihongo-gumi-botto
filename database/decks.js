@@ -97,8 +97,26 @@ class DecksDatabase {
 	/* getters */
 
 	getRandomCard(interaction, deck, callback) {
-		this.db.get(`SELECT * FROM ${deck} ORDER BY RANDOM() LIMIT 1`, [], (err, card) => {
-			if (isOk(interaction, err)) callback(card);
+		this.db.all(`SELECT * FROM ${deck}`, [], (err, cards) => {
+			if (!isOk(interaction, err)) return;
+			if (!cards || cards.length === 0) {
+				callback();
+				return;
+			}
+
+			const weights = cards.map((c) => 1 / (c.score + 1));
+			const totalWeight = weights.reduce((a, b) => a + b, 0);
+			const thresholds = [];
+			let acc = 0;
+
+			for (let w of weights) {
+				acc += w / totalWeight;
+				thresholds.push(acc);
+			}
+
+			const r = Math.random();
+			const index = thresholds.findIndex((t) => r <= t);
+			callback(cards[index]);
 		});
 	}
 

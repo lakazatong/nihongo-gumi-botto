@@ -33,7 +33,7 @@ function startSession(deck, interval, user, resume) {
 			db.getRandomCard(interaction, deck, (card) => {
 				if (!card) {
 					user.send({
-						content: "Session: Empty deck.",
+						content: `**${deck}** empty.`,
 						flags: MessageFlags.Ephemeral,
 					});
 					return;
