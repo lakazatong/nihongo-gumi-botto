@@ -44,7 +44,7 @@ function startSession(deck, interval, user, resume) {
 				const timeoutId = setTimeout(
 					() =>
 						message.edit({
-							content: buildContent(card),
+							content: buildContent(card, false),
 							flags: MessageFlags.Ephemeral,
 						}),
 					30000
