@@ -30,7 +30,7 @@ function startSession(deck, interval, user, resume) {
 				});
 				return;
 			}
-			db.getRandomCard(interaction, deck, (card) => {
+			db.getRandomCard(interaction, deck, userId, (card) => {
 				if (!card) {
 					user.send({
 						content: `**${deck}** empty.`,

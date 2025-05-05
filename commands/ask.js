@@ -7,7 +7,8 @@ const { getIncorrectButton } = require("../buttons/incorrect.js");
 const { buildContent } = require("../utils/decks.js");
 
 async function callback(interaction, deck) {
-	db.getRandomCard(interaction, deck, (card) => {
+	const userId = interaction.user.id;
+	db.getRandomCard(interaction, deck, userId, (card) => {
 		if (!card) {
 			interaction.reply({
 				content: `**${deck}** empty.`,

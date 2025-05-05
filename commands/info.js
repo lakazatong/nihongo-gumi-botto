@@ -4,7 +4,8 @@ const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
 
 async function callback(interaction, deck) {
-	db.getDeckStats(interaction, deck, (stats) => {
+	const userId = interaction.user.id;
+	db.getDeckStats(interaction, deck, userId, (stats) => {
 		interaction.reply({
 			content: `Deck: **${deck}**\nCards: ${stats.count || 0}\nTotal Score: ${stats.total || 0}\nAverage Score: ${
 				stats.average?.toFixed(2) || 0

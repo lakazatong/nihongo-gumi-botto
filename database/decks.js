@@ -2,17 +2,7 @@
 
 const { MessageFlags } = require("discord.js");
 const sqlite3 = require("sqlite3").verbose();
-
-function isOk(interaction, err) {
-	if (err) {
-		interaction.reply({
-			content: err?.message || "An error occurred with sqlite.",
-			flags: MessageFlags.Ephemeral,
-		});
-		return false;
-	}
-	return true;
-}
+const { isOk, getUserScore } = require("../utils/decks.js");
 
 class DecksDatabase {
 	constructor(path = "./database/decks.db") {
@@ -92,7 +82,7 @@ class DecksDatabase {
 
 	/* getters */
 
-	getRandomCard(interaction, deck, callback) {
+	getRandomCard(interaction, deck, userId, callback) {
 		this.db.all(`SELECT * FROM ${deck}`, [], (err, cards) => {
 			if (!isOk(interaction, err)) return;
 			if (!cards || cards.length === 0) {
@@ -100,7 +90,11 @@ class DecksDatabase {
 				return;
 			}
 
-			const weights = cards.map((c) => 1 / (c.score + 1));
+			const weights = cards.map((card) => {
+				const userScore = getUserScore(card.score, userId);
+				return 1 / (userScore + 1);
+			});
+
 			const totalWeight = weights.reduce((a, b) => a + b, 0);
 			const thresholds = [];
 			let acc = 0;
@@ -134,14 +128,29 @@ class DecksDatabase {
 		});
 	}
 
-	getDeckStats(interaction, deck, callback) {
-		this.db.get(
-			`SELECT COUNT(*) as count, SUM(score) as total, AVG(score) as average FROM ${deck}`,
-			[],
-			(err, stats) => {
-				if (isOk(interaction, err)) callback(stats);
-			}
-		);
+	getDeckStats(interaction, deck, userId, callback) {
+		this.db.all(`SELECT * FROM ${deck}`, [], (err, cards) => {
+			if (!isOk(interaction, err)) return;
+
+			let totalScore = 0;
+			let count = 0;
+
+			cards.forEach((card) => {
+				const userScore = getUserScore(card.score, userId);
+				if (userScore > 0) {
+					totalScore += userScore;
+					count++;
+				}
+			});
+
+			const averageScore = count > 0 ? totalScore / count : 0;
+
+			callback({
+				count,
+				total: totalScore,
+				average: averageScore,
+			});
+		});
 	}
 
 	getAllDeckStats(interaction, userId, callback) {
@@ -155,23 +164,31 @@ class DecksDatabase {
 			}
 
 			decks.forEach((deck) => {
-				this.db.get(
-					`SELECT 
-						COUNT(*) as count,
-						SUM(score) as total,
-						AVG(score) as average
-					 FROM ${deck}`,
-					[],
-					(err, row) => {
-						if (err) {
-							stats.push({ deck, count: undefined, total: undefined, average: undefined });
-						} else {
-							row.deck = deck;
-							stats.push(row);
-						}
-						if (--remaining === 0) callback(stats);
+				this.db.all(`SELECT score FROM ${deck}`, [], (err, rows) => {
+					if (err) {
+						stats.push({ deck, count: undefined, total: undefined, average: undefined });
+					} else {
+						let total = 0;
+						let count = 0;
+
+						rows.forEach(({ score }) => {
+							const s = getUserScore(score, userId);
+							if (s > 0) {
+								total += s;
+								count++;
+							}
+						});
+
+						stats.push({
+							deck,
+							count,
+							total,
+							average: count > 0 ? total / count : 0,
+						});
 					}
-				);
+
+					if (--remaining === 0) callback(stats);
+				});
 			});
 		});
 	}
@@ -236,8 +253,22 @@ class DecksDatabase {
 		});
 	}
 
-	updateScoreById(interaction, deck, id, newScore, callback) {
-		this.db.run(`UPDATE ${deck} SET score = ? WHERE id = ?`, [newScore, id], function (err) {
+	updateScoreById(interaction, deck, id, newScore, userId, oldScore, callback) {
+		let updatedScore;
+		const prefix = `${userId}:`;
+		const start = oldScore.indexOf(prefix);
+
+		if (start === -1) {
+			updatedScore = oldScore ? `${oldScore},${prefix}${newScore}` : `${prefix}${newScore}`;
+		} else {
+			const afterStart = start + prefix.length;
+			const end = oldScore.indexOf(",", afterStart);
+			const before = oldScore.slice(0, start);
+			const after = end === -1 ? "" : oldScore.slice(end + 1);
+			updatedScore = [before, `${prefix}${newScore}`, after].filter(Boolean).join(",");
+		}
+
+		this.db.run(`UPDATE ${deck} SET score = ? WHERE id = ?`, [updatedScore, id], function (err) {
 			if (isOk(interaction, err)) callback?.(this);
 		});
 	}
@@ -252,7 +283,7 @@ class DecksDatabase {
 				meanings TEXT NOT NULL,
 				forms TEXT,
 				example TEXT,
-				score INTEGER NOT NULL DEFAULT 0,
+				score TEXT NOT NULL DEFAULT '',
 				UNIQUE (kanji)
 			)`,
 			[],
