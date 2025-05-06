@@ -2,8 +2,7 @@
 
 const { SlashCommandBuilder, ActionRowBuilder, MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
-const { getCorrectButton } = require("../buttons/correct.js");
-const { getIncorrectButton } = require("../buttons/incorrect.js");
+const { getCorrectButton, getIncorrectButton } = require("../utils/buttons.js");
 const { buildContent } = require("../utils/decks.js");
 
 async function callback(interaction, deck) {

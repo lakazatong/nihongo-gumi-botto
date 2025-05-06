@@ -2,8 +2,7 @@
 
 const { ActionRowBuilder, MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
-const { getCorrectButton } = require("../buttons/correct.js");
-const { getIncorrectButton } = require("../buttons/incorrect.js");
+const { getCorrectButton, getIncorrectButton } = require("../utils/buttons.js");
 const { getUserScore } = require("./database.js");
 const { buildContent } = require("./decks.js");
 
@@ -60,8 +59,10 @@ function ask(deck, user, active) {
 			}, 30000);
 
 			const buttons = new ActionRowBuilder().addComponents(
-				getCorrectButton().setCustomId(`correct_${deck}_${card.id}_${timeoutId}_${active}`),
-				getIncorrectButton().setCustomId(`incorrect_${deck}_${card.id}_${timeoutId}_${active}`)
+				getCorrectButton().setCustomId(`correct_${deck}_${card.id}_${timeoutId}_${active ? "true" : "false"}`),
+				getIncorrectButton().setCustomId(
+					`incorrect_${deck}_${card.id}_${timeoutId}_${active ? "true" : "false"}`
+				)
 			);
 
 			message = user.send({

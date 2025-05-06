@@ -1,12 +1,11 @@
 "use strict";
 
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require("discord.js");
+const { ActionRowBuilder } = require("discord.js");
 const db = require("../database/decks.js");
 const { buildContent } = require("../utils/decks.js");
 const { getUserScore } = require("../utils/database.js");
 const { ask } = require("../utils/learn.js");
-
-const getCorrectButton = () => new ButtonBuilder().setCustomId("correct").setLabel("✅").setStyle(ButtonStyle.Success);
+const { getCorrectButton } = require("../utils/buttons.js");
 
 async function callback(interaction) {
 	const userId = interaction.user.id;
@@ -26,7 +25,7 @@ async function callback(interaction) {
 					content: buildContent(card, false),
 					components: [button],
 				});
-				if (active) ask(deck, interaction.user, true);
+				if (active === "true") ask(deck, interaction.user, true);
 			}
 		);
 	});
@@ -34,5 +33,4 @@ async function callback(interaction) {
 
 module.exports = {
 	callback,
-	getCorrectButton,
 };
