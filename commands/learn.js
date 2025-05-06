@@ -60,6 +60,10 @@ async function callback(interaction, deck) {
 		if (oldInterval === 0) {
 			resumeCallback = () => {
 				sessions.set(getKey(userId, deck), [null, oldInterval, null]);
+				user.send({
+					content: `**${deck}** session: resumed the active session.`,
+					flags: MessageFlags.Ephemeral,
+				});
 				ask(deck, user, true);
 			};
 			if (pauseTimeoutId) {
