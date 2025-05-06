@@ -86,6 +86,7 @@ async function callback(interaction, deck) {
 			});
 		}
 	} catch (err) {
+		console.error(err);
 		interaction.editReply({
 			content: "An error occurred while downloading or processing the file.",
 			flags: MessageFlags.Ephemeral,

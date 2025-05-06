@@ -29,7 +29,11 @@ function extractReading(htmlContent) {
 
 function parseAnkiExport(path) {
 	const content = fs.readFileSync(path, "utf-8");
-	const cards = content.split("\n").filter((line) => !line.startsWith("#"));
+	const cards = content
+		.split("\n")
+		.filter((line) => !line.startsWith("#"))
+		.map((line) => line.trim())
+		.filter((line) => line.length > 0);
 
 	const parsedCards = [];
 
@@ -40,8 +44,8 @@ function parseAnkiExport(path) {
 		const front = frontDOM.window.document;
 		const back = backDOM.window.document;
 
-		const kanji = front.querySelector('div[class="frontbg"] > div:nth-child(1)').textContent.trim();
-		const reading = extractReading(back.querySelector('div[class="frontbg"] > div:nth-child(1)').innerHTML);
+		const kanji = front.querySelector('div[id="frontbg"] > div:nth-child(1)').textContent.trim();
+		const reading = extractReading(back.querySelector('div[id="frontbg"] > div:nth-child(1)').innerHTML);
 
 		const categories = Array.from(new Set(Array.from(back.querySelectorAll("span[data-sc-code]"))));
 		const meanings = {};
@@ -67,7 +71,7 @@ function parseAnkiExport(path) {
 			meanings[joinedCategories] = JSON.parse(meaningString);
 		}
 
-		const exampleDiv = front.querySelector('div[class="frontbg"] > div:nth-child(3)');
+		const exampleDiv = front.querySelector('div[id="frontbg"] > div:nth-child(2)');
 		const example = exampleDiv ? exampleDiv.textContent.trim() : "";
 
 		const formsLi = back.querySelector('li[data-sc-content="forms"]');
