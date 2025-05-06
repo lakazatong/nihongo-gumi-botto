@@ -15,7 +15,8 @@ function getKey(id, deck) {
 
 function ask(deck, user, active) {
 	const userId = user.id;
-	if (active && !sessions.has(getKey(userId, deck))) return;
+	// if active and stopped or paused, kill the active lesson
+	if (active && (!sessions.has(getKey(userId, deck)) || sessions.get(getKey(userId, deck))[0])) return;
 	db.db.all(`SELECT user_id FROM owners WHERE deck = ?`, [deck], (err, cards) => {
 		if (err) {
 			user.send({
