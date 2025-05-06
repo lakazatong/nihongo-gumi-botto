@@ -3,7 +3,7 @@
 const { ActionRowBuilder, MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
 const { getCorrectButton, getIncorrectButton } = require("../utils/buttons.js");
-const { getUserScore } = require("./database.js");
+const { pickWeightedRandom } = require("./database.js");
 const { buildContent } = require("./decks.js");
 
 const sessions = new Map();
@@ -30,6 +30,7 @@ function ask(deck, card_ids, user, active) {
 			user.send({
 				content: `**${deck}** session: the deck doesn't exist anymore.`,
 			});
+			if (active) sessions.delete(getKey(userId, deck));
 			return;
 		}
 
@@ -37,6 +38,7 @@ function ask(deck, card_ids, user, active) {
 			user.send({
 				content: `**${deck}** session: You are not the owner anymore.`,
 			});
+			if (active) sessions.delete(getKey(userId, deck));
 			return;
 		}
 
@@ -45,6 +47,7 @@ function ask(deck, card_ids, user, active) {
 				user.send({
 					content: `**${deck}** session: the deck is now empty.`,
 				});
+				if (active) sessions.delete(getKey(userId, deck));
 				return;
 			}
 
@@ -55,7 +58,7 @@ function ask(deck, card_ids, user, active) {
 					content: buildContent(card, false),
 					components: [],
 				});
-				if (active) ask(deck, user, true);
+				if (active) ask(deck, card_ids, user, true);
 			}, 30000);
 
 			const buttons = new ActionRowBuilder().addComponents(
@@ -78,33 +81,20 @@ function ask(deck, card_ids, user, active) {
 				user.send({
 					content: `**${deck}** session: ` + (err?.message || `an error occurred with sqlite.`),
 				});
+				if (active) sessions.delete(getKey(userId, deck));
 				return;
 			}
 
-			if (!cards || cards.length === 0) {
-				help();
-				return;
-			}
-
-			const weights = (card_ids.length === 0 ? cards : cards.filter((card) => card_ids.includes(card.id))).map(
-				(card) => {
-					const userScore = getUserScore(card.score, userId);
-					return 1 / (userScore + 1);
-				}
+			help(
+				!cards || cards.length === 0
+					? null
+					: pickWeightedRandom(
+							card_ids.length === 0
+								? cards
+								: cards.filter((card) => card_ids.includes(card.id.toString())),
+							userId
+					  )[0]
 			);
-
-			const totalWeight = weights.reduce((a, b) => a + b, 0);
-			const thresholds = [];
-			let acc = 0;
-
-			for (let w of weights) {
-				acc += w / totalWeight;
-				thresholds.push(acc);
-			}
-
-			const r = Math.random();
-			const index = thresholds.findIndex((t) => r <= t);
-			help(cards[index]);
 		});
 	});
 }

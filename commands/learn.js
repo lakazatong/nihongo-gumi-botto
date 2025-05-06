@@ -3,6 +3,7 @@
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
 const { sessions, getKey, ask } = require("../utils/learn.js");
+const { pickWeightedRandom } = require("../utils/database.js");
 
 function startSession(deck, card_ids, interval, user, resume) {
 	const userId = user.id;
@@ -29,12 +30,12 @@ async function callback(interaction, deck) {
 	const stop = interaction.options.getBoolean("stop");
 	const pause = interaction.options.getInteger("pause");
 	const interval = interaction.options.getInteger("interval");
-	const count = interaction.options.getInteger("count");
+	let count = interaction.options.getInteger("count");
 
 	if (Number.isInteger(count)) {
 		if (count === 0) {
 			interaction.reply({
-				content: `Count cannot be 0.`,
+				content: `**Count** cannot be 0.`,
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
@@ -110,6 +111,12 @@ async function callback(interaction, deck) {
 			return;
 		}
 
+		if (sessions.has(getKey(userId, deck))) {
+			const [pauseTimeoutId, _, intervalId] = sessions.get(getKey(userId, deck));
+			if (pauseTimeoutId) clearTimeout(pauseTimeoutId);
+			if (intervalId) clearInterval(intervalId);
+		}
+
 		if (interval === 0) {
 			sessions.set(getKey(userId, deck), [null, 0, null]);
 			ask(deck, card_ids, user, true);
@@ -125,12 +132,6 @@ async function callback(interaction, deck) {
 			return;
 		}
 
-		if (sessions.has(getKey(userId, deck))) {
-			const [pauseTimeoutId, _, intervalId] = sessions.get(getKey(userId, deck));
-			if (pauseTimeoutId) clearTimeout(pauseTimeoutId);
-			if (intervalId) clearInterval(intervalId);
-		}
-
 		startSession(deck, card_ids, interval, user, false);
 
 		interaction.reply({
@@ -144,7 +145,9 @@ async function callback(interaction, deck) {
 	if (count === 0) {
 		help([]);
 	} else {
-		db.getAllCards(interaction, deck, (cards) => help(cards.sort((a, b) => a.score - b.score).slice(0, count)));
+		db.getAllCards(interaction, deck, (cards) =>
+			help(pickWeightedRandom(cards, userId, count).map((card) => card.id.toString()))
+		);
 	}
 }
 

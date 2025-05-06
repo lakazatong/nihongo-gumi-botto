@@ -2,7 +2,7 @@
 
 const { MessageFlags } = require("discord.js");
 const sqlite3 = require("sqlite3").verbose();
-const { isOk, getUserScore } = require("../utils/database.js");
+const { isOk, getUserScore, pickWeightedRandom } = require("../utils/database.js");
 
 class DecksDatabase {
 	constructor(path = "./database/decks.db") {
@@ -83,7 +83,7 @@ class DecksDatabase {
 	/* getters */
 
 	getAllCards(interaction, deck, callback) {
-		this.db.all(`SELECT kanji, reading, meanings, forms, example FROM ${deck}`, [], (err, cards) => {
+		this.db.all(`SELECT * FROM ${deck}`, [], (err, cards) => {
 			if (isOk(interaction, err)) callback(cards);
 		});
 	}
@@ -113,6 +113,18 @@ class DecksDatabase {
 			const r = Math.random();
 			const index = thresholds.findIndex((t) => r <= t);
 			callback(cards[index]);
+		});
+	}
+
+	getRandomCard(interaction, deck, userId, callback) {
+		this.db.all(`SELECT * FROM ${deck}`, [], (err, cards) => {
+			if (!isOk(interaction, err)) return;
+			if (!cards || cards.length === 0) {
+				callback();
+				return;
+			}
+
+			callback(pickWeightedRandom(cards, userId)[0]);
 		});
 	}
 
