@@ -58,7 +58,10 @@ async function callback(interaction, deck) {
 		let resumeCallback;
 		let content = `Renewed your pause for **${deck}** to **${pause}** minute${pause > 1 ? "s" : ""}.`;
 		if (oldInterval === 0) {
-			resumeCallback = () => ask(deck, user, true);
+			resumeCallback = () => {
+				sessions.set(getKey(userId, deck), [null, oldInterval, null]);
+				ask(deck, user, true);
+			};
 			if (pauseTimeoutId) {
 				clearTimeout(pauseTimeoutId);
 			} else {

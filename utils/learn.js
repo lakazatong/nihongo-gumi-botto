@@ -40,7 +40,7 @@ function ask(deck, user, active) {
 			return;
 		}
 
-		function help(card) {
+		async function help(card) {
 			if (!card) {
 				user.send({
 					content: `**${deck}** session: the deck is now empty.`,
@@ -65,7 +65,7 @@ function ask(deck, user, active) {
 				)
 			);
 
-			message = user.send({
+			message = await user.send({
 				content: buildContent(card),
 				components: [buttons],
 			});
