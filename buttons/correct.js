@@ -1,6 +1,6 @@
 "use strict";
 
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
 const { buildContent } = require("../utils/decks.js");
 const { getUserScore } = require("../utils/database.js");
@@ -23,6 +23,7 @@ async function callback(interaction) {
 				const button = new ActionRowBuilder().addComponents(getCorrectButton().setDisabled(true));
 				interaction.update({
 					content: buildContent(card, false),
+					flags: MessageFlags.Ephemeral,
 					components: [button],
 				});
 			}

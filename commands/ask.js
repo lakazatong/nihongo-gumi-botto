@@ -28,8 +28,8 @@ async function callback(interaction, deck) {
 		);
 
 		const buttons = new ActionRowBuilder().addComponents(
-			getCorrectButton().setCustomId(`correct_${deck}_${card.id}_${timeoutId}`),
-			getIncorrectButton().setCustomId(`incorrect_${deck}_${card.id}_${timeoutId}`)
+			getCorrectButton().setCustomId(`correct_${deck}_${card.id}_${timeoutId}_false`),
+			getIncorrectButton().setCustomId(`incorrect_${deck}_${card.id}_${timeoutId}_false`)
 		);
 
 		interaction.reply({

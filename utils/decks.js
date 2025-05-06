@@ -106,4 +106,5 @@ module.exports = {
 	withDeck,
 	buildContent,
 	getTargetUser,
+	ask,
 };

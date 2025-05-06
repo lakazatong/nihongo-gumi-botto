@@ -1,126 +1,22 @@
 "use strict";
 
 const { SlashCommandBuilder, MessageFlags, ActionRowBuilder } = require("discord.js");
-const db = require("../database/decks.js");
-const { getCorrectButton } = require("../buttons/correct.js");
-const { getIncorrectButton } = require("../buttons/incorrect.js");
-const { buildContent } = require("../utils/decks.js");
-const { getUserScore } = require("../utils/database.js");
-
-const sessions = new Map();
-
-function getKey(id, deck) {
-	return `${id}_${deck}`;
-}
+const { sessions, getKey, ask } = require("../utils/learn.js");
 
 function startSession(deck, interval, user, resume) {
 	const userId = user.id;
-	function ask() {
-		db.db.all(`SELECT user_id FROM owners WHERE deck = ?`, [deck], (err, cards) => {
-			if (err) {
-				user.send({
-					content: `**${deck}** session: ` + (err?.message || `an error occurred with sqlite.`),
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-
-			const owner_ids = cards?.map((row) => row.user_id) || [];
-
-			if (owner_ids.length === 0) {
-				user.send({
-					content: `**${deck}** session: the deck doesn't exist anymore.`,
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-
-			if (!owner_ids.includes(userId)) {
-				user.send({
-					content: `**${deck}** session: You are not the owner anymore.`,
-					flags: MessageFlags.Ephemeral,
-				});
-				return;
-			}
-
-			function help(card) {
-				if (!card) {
-					user.send({
-						content: `**${deck}** session: the deck is now empty.`,
-						flags: MessageFlags.Ephemeral,
-					});
-					return;
-				}
-
-				let message;
-
-				const timeoutId = setTimeout(
-					() =>
-						message.edit({
-							content: buildContent(card, false),
-							flags: MessageFlags.Ephemeral,
-							components: [],
-						}),
-					30000
-				);
-
-				const buttons = new ActionRowBuilder().addComponents(
-					getCorrectButton().setCustomId(`correct_${deck}_${card.id}_${timeoutId}`),
-					getIncorrectButton().setCustomId(`incorrect_${deck}_${card.id}_${timeoutId}`)
-				);
-
-				message = user.send({
-					content: buildContent(card),
-					flags: MessageFlags.Ephemeral,
-					components: [buttons],
-				});
-			}
-
-			db.db.all(`SELECT * FROM ${deck}`, [], (err, cards) => {
-				if (err) {
-					user.send({
-						content: `**${deck}** session: ` + (err?.message || `an error occurred with sqlite.`),
-						flags: MessageFlags.Ephemeral,
-					});
-					return;
-				}
-
-				if (!cards || cards.length === 0) {
-					help();
-					return;
-				}
-
-				const weights = cards.map((card) => {
-					const userScore = getUserScore(card.score, userId);
-					return 1 / (userScore + 1);
-				});
-
-				const totalWeight = weights.reduce((a, b) => a + b, 0);
-				const thresholds = [];
-				let acc = 0;
-
-				for (let w of weights) {
-					acc += w / totalWeight;
-					thresholds.push(acc);
-				}
-
-				const r = Math.random();
-				const index = thresholds.findIndex((t) => r <= t);
-				help(cards[index]);
-			});
-		});
-	}
-
-	sessions.set(getKey(userId, deck), [interval, setInterval(ask, interval * 60000)]);
+	sessions.set(getKey(userId, deck), [false, interval, setInterval(() => ask(deck, user, false), interval * 60000)]);
 
 	if (resume) {
 		user.send({
-			content: `**${deck}** session: resumed with an interval of **${interval}** minutes.`,
+			content: `**${deck}** session: resumed with an interval of **${interval}** minute${
+				interval > 1 ? "s" : ""
+			}.`,
 			flags: MessageFlags.Ephemeral,
 		});
 	}
 
-	ask();
+	ask(deck, user, false);
 }
 
 async function callback(interaction, deck) {
@@ -131,11 +27,17 @@ async function callback(interaction, deck) {
 
 	if (stop) {
 		if (sessions.has(getKey(userId, deck))) {
-			const [_, intervalId] = sessions.get(getKey(userId, deck));
-			clearInterval(intervalId);
+			const [_, oldInterval, intervalId] = sessions.get(getKey(userId, deck));
+			let content;
 			sessions.delete(getKey(userId, deck));
+			if (oldInterval === 0) {
+				content = `Stopped your active learning session for **${deck}**.`;
+			} else {
+				content = `Stopped your learning session for **${deck}**.`;
+				clearInterval(intervalId);
+			}
 			interaction.reply({
-				content: `Stopped your learning session for **${deck}**.`,
+				content,
 				flags: MessageFlags.Ephemeral,
 			});
 		} else {
@@ -157,21 +59,38 @@ async function callback(interaction, deck) {
 			});
 			return;
 		}
-		const [oldInterval, intervalId] = sessions.get(getKey(userId, deck));
-		clearInterval(intervalId);
-		sessions.delete(getKey(userId, deck));
+		const [paused, oldInterval, intervalId] = sessions.get(getKey(userId, deck));
+		let resumeCallback;
+		let content = `Renewed your pause for **${deck}** to **${pause}** minute${pause > 1 ? "s" : ""}.`;
+		if (oldInterval === 0) {
+			resumeCallback = () => ask(deck, user, true);
+			if (!paused) {
+				content = `Paused your active session for **${pause}** minute${pause > 1 ? "s" : ""} for **${deck}**.`;
+			}
+		} else {
+			resumeCallback = () => startSession(deck, oldInterval, user, true);
+			if (!paused) {
+				clearInterval(intervalId);
+				content = `Paused your session for **${pause}** minute${pause > 1 ? "s" : ""} for **${deck}**.`;
+			}
+		}
+		setTimeout(resumeCallback, pause * 60000);
+		sessions.set(getKey(userId, deck), [true, oldInterval, null]);
 		interaction.reply({
-			content: `Paused your session for **${pause}** minutes for **${deck}**.`,
+			content,
 			flags: MessageFlags.Ephemeral,
 		});
-		setTimeout(() => {
-			startSession(deck, oldInterval, user, true);
-		}, pause * 60000);
+
 		return;
 	}
 
 	if (interval === 0) {
-		interaction.reply({ content: "Interval cannot be 0.", flags: MessageFlags.Ephemeral });
+		sessions.set(getKey(userId, deck), [false, 0, null]);
+		ask(deck, user, true);
+		interaction.reply({
+			content: `Started an active learning session for **${deck}**.`,
+			flags: MessageFlags.Ephemeral,
+		});
 		return;
 	}
 
@@ -181,14 +100,16 @@ async function callback(interaction, deck) {
 	}
 
 	if (sessions.has(getKey(userId, deck))) {
-		const [_, intervalId] = sessions.get(getKey(userId, deck));
-		clearInterval(intervalId);
+		const [_, oldInterval, intervalId] = sessions.get(getKey(userId, deck));
+		if (oldInterval !== 0) {
+			clearInterval(intervalId);
+		}
 	}
 
 	startSession(deck, interval, user, false);
 
 	interaction.reply({
-		content: `Started a learning session every **${interval}** minutes for **${deck}**.`,
+		content: `Started a learning session every **${interval}** minute${interval > 1 ? "s" : ""} for **${deck}**.`,
 		flags: MessageFlags.Ephemeral,
 	});
 }
