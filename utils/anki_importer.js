@@ -1,6 +1,7 @@
 "use strict";
 
 const fs = require("fs");
+const path = require("path");
 const { JSDOM } = require("jsdom");
 // const beautify = require("js-beautify").html;
 
@@ -28,19 +29,14 @@ function extractReading(htmlContent) {
 
 function parseAnkiExport(path) {
 	const content = fs.readFileSync(path, "utf-8");
-	const cards = content
-		.split("\n")
-		.filter((line) => !line.startsWith("#"))
-		.join("\n")
-		.split('</div>"\n')
-		.filter((card) => card.trim() !== "");
+	const cards = content.split("\n").filter((line) => !line.startsWith("#"));
 
 	const parsedCards = [];
 
 	for (const card of cards) {
 		const parts = card.split("\t");
-		const frontDOM = new JSDOM(parts[0].slice(1, parts[0].length - 1).replaceAll('""', '"'));
-		const backDOM = new JSDOM((parts[1].slice(1) + "</div>").replaceAll('""', '"'));
+		const frontDOM = new JSDOM(parts[0]);
+		const backDOM = new JSDOM(parts[1].slice(1, parts[1].length - 1).replaceAll('""', '"'));
 		const front = frontDOM.window.document;
 		const back = backDOM.window.document;
 
@@ -94,7 +90,7 @@ function parseAnkiExport(path) {
 }
 
 function saveCardsToJson(file) {
-	const filename = `${file.split(".")[0]}.json`;
+	const filename = path.basename(file, path.extname(file)) + ".json";
 	try {
 		fs.writeFileSync(filename, JSON.stringify(parseAnkiExport(file), null, 1));
 		return filename;
@@ -107,5 +103,5 @@ function saveCardsToJson(file) {
 // saveCardsToJson("./Default.txt");
 
 module.exports = {
-	saveCardsToJson,
+	parseAnkiExport,
 };

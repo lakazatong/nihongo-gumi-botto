@@ -3,7 +3,7 @@
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const fs = require("fs");
 const axios = require("axios");
-const { saveCardsToJson } = require("../utils/anki_importer.js");
+const { parseAnkiExport } = require("../utils/anki_importer.js");
 const db = require("../database/decks.js");
 
 async function callback(interaction, deck) {
@@ -29,30 +29,9 @@ async function callback(interaction, deck) {
 			writer.on("error", reject);
 		});
 
-		const cardsPath = saveCardsToJson(filename);
-		if (!cardsPath) {
-			interaction.editReply({
-				content: "An error occurred while parsing the file.",
-				flags: MessageFlags.Ephemeral,
-			});
-			return;
-		}
-		const fileContent = fs.readFileSync(cardsPath, "utf-8");
-
-		fs.unlink(cardsPath, (err) => {
-			if (err) {
-				console.error("fs.unlink", err);
-			}
-		});
-		fs.unlink(filename, (err) => {
-			if (err) {
-				console.error("fs.unlink", err);
-			}
-		});
-
 		const errKanjis = [];
 
-		JSON.parse(fileContent).forEach(({ kanji, reading, meanings, forms, example }) => {
+		parseAnkiExport(filename).forEach(({ kanji, reading, meanings, forms, example }) => {
 			db.db.run(
 				`INSERT OR REPLACE INTO ${deck} (kanji, reading, meanings, forms, example) VALUES (?, ?, ?, ?, ?)`,
 				[
@@ -73,6 +52,12 @@ async function callback(interaction, deck) {
 					}
 				}
 			);
+		});
+
+		fs.unlink(filename, (err) => {
+			if (err) {
+				console.error("fs.unlink", err);
+			}
 		});
 
 		if (errKanjis.length > 0) {

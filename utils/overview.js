@@ -3,7 +3,7 @@ const path = require("path");
 
 const overview = [];
 
-fs.readdirSync("./commands")
+fs.readdirSync("../commands")
 	.filter((file) => file.endsWith(".js"))
 	.forEach((file) => {
 		const command = require(`./commands/${file}`);
@@ -37,6 +37,6 @@ const overviewText = overview
 	})
 	.join("\n\n");
 
-fs.writeFileSync(path.join(__dirname, "bot_overview.txt"), overviewText);
+fs.writeFileSync("./bot_overview.txt", overviewText);
 
 console.log("Bot overview written to 'bot_overview.txt'.");
