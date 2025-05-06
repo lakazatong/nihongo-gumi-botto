@@ -82,6 +82,12 @@ class DecksDatabase {
 
 	/* getters */
 
+	getAllCards(interaction, deck, callback) {
+		this.db.all(`SELECT kanji, reading, meanings, forms, example FROM ${deck}`, [], (err, cards) => {
+			if (isOk(interaction, err)) callback(cards);
+		});
+	}
+
 	getRandomCard(interaction, deck, userId, callback) {
 		this.db.all(`SELECT * FROM ${deck}`, [], (err, cards) => {
 			if (!isOk(interaction, err)) return;
