@@ -23,7 +23,6 @@ async function callback(interaction) {
 				const button = new ActionRowBuilder().addComponents(getCorrectButton().setDisabled(true));
 				interaction.update({
 					content: buildContent(card, false),
-					flags: MessageFlags.Ephemeral,
 					components: [button],
 				});
 			}

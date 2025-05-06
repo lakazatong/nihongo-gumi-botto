@@ -1,11 +1,11 @@
 "use strict";
 
-const { SlashCommandBuilder, MessageFlags, ActionRowBuilder } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const { sessions, getKey, ask } = require("../utils/learn.js");
 
 function startSession(deck, interval, user, resume) {
 	const userId = user.id;
-	sessions.set(getKey(userId, deck), [false, interval, setInterval(() => ask(deck, user, false), interval * 60000)]);
+	sessions.set(getKey(userId, deck), [null, interval, setInterval(() => ask(deck, user, false), interval * 60000)]);
 
 	if (resume) {
 		user.send({
@@ -27,17 +27,12 @@ async function callback(interaction, deck) {
 
 	if (stop) {
 		if (sessions.has(getKey(userId, deck))) {
-			const [_, oldInterval, intervalId] = sessions.get(getKey(userId, deck));
-			let content;
+			const [pauseTimeoutId, oldInterval, intervalId] = sessions.get(getKey(userId, deck));
+			if (pauseTimeoutId) clearTimeout(pauseTimeoutId);
+			if (intervalId) clearInterval(intervalId);
 			sessions.delete(getKey(userId, deck));
-			if (oldInterval === 0) {
-				content = `Stopped your active learning session for **${deck}**.`;
-			} else {
-				content = `Stopped your learning session for **${deck}**.`;
-				clearInterval(intervalId);
-			}
 			interaction.reply({
-				content,
+				content: `Stopped your${oldInterval === 0 ? " active" : ""} learning session for **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 		} else {
@@ -59,23 +54,26 @@ async function callback(interaction, deck) {
 			});
 			return;
 		}
-		const [paused, oldInterval, intervalId] = sessions.get(getKey(userId, deck));
+		const [pauseTimeoutId, oldInterval, intervalId] = sessions.get(getKey(userId, deck));
 		let resumeCallback;
 		let content = `Renewed your pause for **${deck}** to **${pause}** minute${pause > 1 ? "s" : ""}.`;
 		if (oldInterval === 0) {
 			resumeCallback = () => ask(deck, user, true);
-			if (!paused) {
+			if (pauseTimeoutId) {
+				clearTimeout(pauseTimeoutId);
+			} else {
 				content = `Paused your active session for **${pause}** minute${pause > 1 ? "s" : ""} for **${deck}**.`;
 			}
 		} else {
 			resumeCallback = () => startSession(deck, oldInterval, user, true);
-			if (!paused) {
+			if (pauseTimeoutId) {
+				clearTimeout(pauseTimeoutId);
+			} else {
 				clearInterval(intervalId);
 				content = `Paused your session for **${pause}** minute${pause > 1 ? "s" : ""} for **${deck}**.`;
 			}
 		}
-		setTimeout(resumeCallback, pause * 60000);
-		sessions.set(getKey(userId, deck), [true, oldInterval, null]);
+		sessions.set(getKey(userId, deck), [setTimeout(resumeCallback, pause * 60000), oldInterval, null]);
 		interaction.reply({
 			content,
 			flags: MessageFlags.Ephemeral,
@@ -85,7 +83,7 @@ async function callback(interaction, deck) {
 	}
 
 	if (interval === 0) {
-		sessions.set(getKey(userId, deck), [false, 0, null]);
+		sessions.set(getKey(userId, deck), [null, 0, null]);
 		ask(deck, user, true);
 		interaction.reply({
 			content: `Started an active learning session for **${deck}**.`,
@@ -100,10 +98,9 @@ async function callback(interaction, deck) {
 	}
 
 	if (sessions.has(getKey(userId, deck))) {
-		const [_, oldInterval, intervalId] = sessions.get(getKey(userId, deck));
-		if (oldInterval !== 0) {
-			clearInterval(intervalId);
-		}
+		const [pauseTimeoutId, _, intervalId] = sessions.get(getKey(userId, deck));
+		if (pauseTimeoutId) clearTimeout(pauseTimeoutId);
+		if (intervalId) clearInterval(intervalId);
 	}
 
 	startSession(deck, interval, user, false);

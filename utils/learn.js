@@ -1,10 +1,11 @@
 "use strict";
 
-const { MessageFlags } = require("discord.js");
+const { ActionRowBuilder, MessageFlags } = require("discord.js");
 const db = require("../database/decks.js");
 const { getCorrectButton } = require("../buttons/correct.js");
 const { getIncorrectButton } = require("../buttons/incorrect.js");
 const { getUserScore } = require("./database.js");
+const { buildContent } = require("./decks.js");
 
 const sessions = new Map();
 
@@ -19,7 +20,6 @@ function ask(deck, user, active) {
 		if (err) {
 			user.send({
 				content: `**${deck}** session: ` + (err?.message || `an error occurred with sqlite.`),
-				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
@@ -29,7 +29,6 @@ function ask(deck, user, active) {
 		if (owner_ids.length === 0) {
 			user.send({
 				content: `**${deck}** session: the deck doesn't exist anymore.`,
-				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
@@ -37,7 +36,6 @@ function ask(deck, user, active) {
 		if (!owner_ids.includes(userId)) {
 			user.send({
 				content: `**${deck}** session: You are not the owner anymore.`,
-				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
@@ -46,7 +44,6 @@ function ask(deck, user, active) {
 			if (!card) {
 				user.send({
 					content: `**${deck}** session: the deck is now empty.`,
-					flags: MessageFlags.Ephemeral,
 				});
 				return;
 			}
@@ -56,7 +53,6 @@ function ask(deck, user, active) {
 			const timeoutId = setTimeout(() => {
 				message.edit({
 					content: buildContent(card, false),
-					flags: MessageFlags.Ephemeral,
 					components: [],
 				});
 				if (active) ask(deck, user, true);
@@ -69,7 +65,6 @@ function ask(deck, user, active) {
 
 			message = user.send({
 				content: buildContent(card),
-				flags: MessageFlags.Ephemeral,
 				components: [buttons],
 			});
 		}
@@ -78,7 +73,6 @@ function ask(deck, user, active) {
 			if (err) {
 				user.send({
 					content: `**${deck}** session: ` + (err?.message || `an error occurred with sqlite.`),
-					flags: MessageFlags.Ephemeral,
 				});
 				return;
 			}
