@@ -1,11 +1,16 @@
 "use strict";
 
 const { SlashCommandBuilder, MessageFlags } = require("discord.js");
+const db = require("../database/decks.js");
 const { sessions, getKey, ask } = require("../utils/learn.js");
 
-function startSession(deck, interval, user, resume) {
+function startSession(deck, card_ids, interval, user, resume) {
 	const userId = user.id;
-	sessions.set(getKey(userId, deck), [null, interval, setInterval(() => ask(deck, user, false), interval * 60000)]);
+	sessions.set(getKey(userId, deck), [
+		null,
+		interval,
+		setInterval(() => ask(deck, card_ids, user, false), interval * 60000),
+	]);
 
 	if (resume) {
 		user.send({
@@ -16,7 +21,7 @@ function startSession(deck, interval, user, resume) {
 		});
 	}
 
-	ask(deck, user, false);
+	ask(deck, card_ids, user, false);
 }
 
 async function callback(interaction, deck) {
@@ -24,6 +29,19 @@ async function callback(interaction, deck) {
 	const stop = interaction.options.getBoolean("stop");
 	const pause = interaction.options.getInteger("pause");
 	const interval = interaction.options.getInteger("interval");
+	const count = interaction.options.getInteger("count");
+
+	if (Number.isInteger(count)) {
+		if (count === 0) {
+			interaction.reply({
+				content: `Count cannot be 0.`,
+				flags: MessageFlags.Ephemeral,
+			});
+			return;
+		}
+	} else {
+		count = 0;
+	}
 
 	if (stop) {
 		if (sessions.has(getKey(userId, deck))) {
@@ -46,76 +64,88 @@ async function callback(interaction, deck) {
 
 	const user = await interaction.client.users.fetch(userId);
 
-	if (pause) {
-		if (!sessions.has(getKey(userId, deck))) {
+	function help(card_ids) {
+		if (pause) {
+			if (!sessions.has(getKey(userId, deck))) {
+				interaction.reply({
+					content: `No active session to pause for **${deck}**.`,
+					flags: MessageFlags.Ephemeral,
+				});
+				return;
+			}
+			const [pauseTimeoutId, oldInterval, intervalId] = sessions.get(getKey(userId, deck));
+			let resumeCallback;
+			let content = `Renewed your pause for **${deck}** to **${pause}** minute${pause > 1 ? "s" : ""}.`;
+			if (oldInterval === 0) {
+				resumeCallback = () => {
+					sessions.set(getKey(userId, deck), [null, oldInterval, null]);
+					user.send({
+						content: `**${deck}** session: resumed the active session.`,
+						flags: MessageFlags.Ephemeral,
+					});
+					ask(deck, card_ids, user, true);
+				};
+				if (pauseTimeoutId) {
+					clearTimeout(pauseTimeoutId);
+				} else {
+					content = `Paused your active session for **${pause}** minute${
+						pause > 1 ? "s" : ""
+					} for **${deck}**.`;
+				}
+			} else {
+				resumeCallback = () => startSession(deck, card_ids, oldInterval, user, true);
+				if (pauseTimeoutId) {
+					clearTimeout(pauseTimeoutId);
+				} else {
+					clearInterval(intervalId);
+					content = `Paused your session for **${pause}** minute${pause > 1 ? "s" : ""} for **${deck}**.`;
+				}
+			}
+			sessions.set(getKey(userId, deck), [setTimeout(resumeCallback, pause * 60000), oldInterval, null]);
 			interaction.reply({
-				content: `No active session to pause for **${deck}**.`,
+				content,
+				flags: MessageFlags.Ephemeral,
+			});
+
+			return;
+		}
+
+		if (interval === 0) {
+			sessions.set(getKey(userId, deck), [null, 0, null]);
+			ask(deck, card_ids, user, true);
+			interaction.reply({
+				content: `Started an active learning session for **${deck}**.`,
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
-		const [pauseTimeoutId, oldInterval, intervalId] = sessions.get(getKey(userId, deck));
-		let resumeCallback;
-		let content = `Renewed your pause for **${deck}** to **${pause}** minute${pause > 1 ? "s" : ""}.`;
-		if (oldInterval === 0) {
-			resumeCallback = () => {
-				sessions.set(getKey(userId, deck), [null, oldInterval, null]);
-				user.send({
-					content: `**${deck}** session: resumed the active session.`,
-					flags: MessageFlags.Ephemeral,
-				});
-				ask(deck, user, true);
-			};
-			if (pauseTimeoutId) {
-				clearTimeout(pauseTimeoutId);
-			} else {
-				content = `Paused your active session for **${pause}** minute${pause > 1 ? "s" : ""} for **${deck}**.`;
-			}
-		} else {
-			resumeCallback = () => startSession(deck, oldInterval, user, true);
-			if (pauseTimeoutId) {
-				clearTimeout(pauseTimeoutId);
-			} else {
-				clearInterval(intervalId);
-				content = `Paused your session for **${pause}** minute${pause > 1 ? "s" : ""} for **${deck}**.`;
-			}
+
+		if (!interval) {
+			interaction.reply({ content: "Interval is required unless stopping.", flags: MessageFlags.Ephemeral });
+			return;
 		}
-		sessions.set(getKey(userId, deck), [setTimeout(resumeCallback, pause * 60000), oldInterval, null]);
+
+		if (sessions.has(getKey(userId, deck))) {
+			const [pauseTimeoutId, _, intervalId] = sessions.get(getKey(userId, deck));
+			if (pauseTimeoutId) clearTimeout(pauseTimeoutId);
+			if (intervalId) clearInterval(intervalId);
+		}
+
+		startSession(deck, card_ids, interval, user, false);
+
 		interaction.reply({
-			content,
+			content: `Started a learning session every **${interval}** minute${
+				interval > 1 ? "s" : ""
+			} for **${deck}**.`,
 			flags: MessageFlags.Ephemeral,
 		});
-
-		return;
 	}
 
-	if (interval === 0) {
-		sessions.set(getKey(userId, deck), [null, 0, null]);
-		ask(deck, user, true);
-		interaction.reply({
-			content: `Started an active learning session for **${deck}**.`,
-			flags: MessageFlags.Ephemeral,
-		});
-		return;
+	if (count === 0) {
+		help([]);
+	} else {
+		db.getAllCards(interaction, deck, (cards) => help(cards.sort((a, b) => a.score - b.score).slice(0, count)));
 	}
-
-	if (!interval) {
-		interaction.reply({ content: "Interval is required unless stopping.", flags: MessageFlags.Ephemeral });
-		return;
-	}
-
-	if (sessions.has(getKey(userId, deck))) {
-		const [pauseTimeoutId, _, intervalId] = sessions.get(getKey(userId, deck));
-		if (pauseTimeoutId) clearTimeout(pauseTimeoutId);
-		if (intervalId) clearInterval(intervalId);
-	}
-
-	startSession(deck, interval, user, false);
-
-	interaction.reply({
-		content: `Started a learning session every **${interval}** minute${interval > 1 ? "s" : ""} for **${deck}**.`,
-		flags: MessageFlags.Ephemeral,
-	});
 }
 
 module.exports = {
@@ -141,6 +171,9 @@ module.exports = {
 		)
 		.addIntegerOption((opt) =>
 			opt.setName("interval").setDescription("Interval in minutes between quizzes").setRequired(false)
+		)
+		.addIntegerOption((opt) =>
+			opt.setName("count").setDescription("How many cards to be quizzed for.").setRequired(false)
 		)
 		.addStringOption((opt) => opt.setName("deck").setDescription("The deck name").setRequired(false)),
 	callback,

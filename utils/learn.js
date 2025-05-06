@@ -12,11 +12,11 @@ function getKey(id, deck) {
 	return `${id}_${deck}`;
 }
 
-function ask(deck, user, active) {
+function ask(deck, card_ids, user, active) {
 	const userId = user.id;
 	// if active and stopped or paused, kill the active lesson
 	if (active && (!sessions.has(getKey(userId, deck)) || sessions.get(getKey(userId, deck))[0])) return;
-	db.db.all(`SELECT user_id FROM owners WHERE deck = ?`, [deck], (err, cards) => {
+	db.db.all(`SELECT user_id FROM owners WHERE deck = ?`, [deck], (err, rows) => {
 		if (err) {
 			user.send({
 				content: `**${deck}** session: ` + (err?.message || `an error occurred with sqlite.`),
@@ -24,7 +24,7 @@ function ask(deck, user, active) {
 			return;
 		}
 
-		const owner_ids = cards?.map((row) => row.user_id) || [];
+		const owner_ids = rows?.map((row) => row.user_id) || [];
 
 		if (owner_ids.length === 0) {
 			user.send({
@@ -59,9 +59,11 @@ function ask(deck, user, active) {
 			}, 30000);
 
 			const buttons = new ActionRowBuilder().addComponents(
-				getCorrectButton().setCustomId(`correct_${deck}_${card.id}_${timeoutId}_${active ? "true" : "false"}`),
+				getCorrectButton().setCustomId(
+					`correct_${deck}_${card_ids.join(",")}_${card.id}_${timeoutId}_${active ? "true" : "false"}`
+				),
 				getIncorrectButton().setCustomId(
-					`incorrect_${deck}_${card.id}_${timeoutId}_${active ? "true" : "false"}`
+					`incorrect_${deck}_${card_ids.join(",")}_${card.id}_${timeoutId}_${active ? "true" : "false"}`
 				)
 			);
 
@@ -84,10 +86,12 @@ function ask(deck, user, active) {
 				return;
 			}
 
-			const weights = cards.map((card) => {
-				const userScore = getUserScore(card.score, userId);
-				return 1 / (userScore + 1);
-			});
+			const weights = (card_ids.length === 0 ? cards : cards.filter((card) => card_ids.includes(card.id))).map(
+				(card) => {
+					const userScore = getUserScore(card.score, userId);
+					return 1 / (userScore + 1);
+				}
+			);
 
 			const totalWeight = weights.reduce((a, b) => a + b, 0);
 			const thresholds = [];

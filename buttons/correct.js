@@ -9,7 +9,8 @@ const { getCorrectButton } = require("../utils/buttons.js");
 
 async function callback(interaction) {
 	const userId = interaction.user.id;
-	const [_, deck, id, timeoutId, active] = interaction.customId.split("_");
+	const [_, deck, card_ids_raw, id, timeoutId, active] = interaction.customId.split("_");
+	const card_ids = card_ids_raw.length === 0 ? [] : card_ids_raw.split(",");
 	clearTimeout(timeoutId);
 	db.getCardById(interaction, deck, id, (card) => {
 		db.updateScoreById(
@@ -25,7 +26,7 @@ async function callback(interaction) {
 					content: buildContent(card, false),
 					components: [button],
 				});
-				if (active === "true") ask(deck, interaction.user, true);
+				if (active === "true") ask(deck, card_ids, interaction.user, true);
 			}
 		);
 	});
