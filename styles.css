@@ -1,0 +1,30 @@
+.card {
+	font-family: arial;
+	font-size: 20px;
+	text-align: center;
+	color: #ffffff;
+	background-color: #2d2d2d;
+}
+
+#frontbg {
+	background-color: #18adab;
+	padding: 15px;
+	border-radius: 7px;
+	color: #fff;
+	position: relative;
+	left: 0;
+}
+
+#backbg {
+	position: relative;
+	top: -6px;
+	background-color: #fff;
+	padding: 15px;
+	padding-bottom: 15px;
+	padding-left: 30px;
+	padding-right: 30px;
+	border-radius: 0px 0px 10px 10px;
+	color: #016ea6;
+	font-size: 24px;
+	text-align: left;
+}
