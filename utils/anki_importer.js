@@ -79,6 +79,7 @@ function parseAnkiExport(path) {
 			? Array.from(formsLi.querySelectorAll("table tr:first-child th"))
 					.slice(1)
 					.map((th) => th.textContent.trim())
+					.filter((form) => form !== kanji)
 			: [];
 
 		parsedCards.push({

@@ -50,7 +50,7 @@ function buildContent(card, spoiler = true) {
 				if (!values) return `- ${category}`;
 				const items = values
 					.split(",")
-					.map((v) => `- ${v}`)
+					.map((value) => `- ${value}`)
 					.join("\n");
 				return `${category}:\n${items}`;
 			})
@@ -60,7 +60,8 @@ function buildContent(card, spoiler = true) {
 	if (card.forms) {
 		const forms = card.forms
 			.split(",")
-			.map((f) => `- ${f}`)
+			.filter((form) => form !== kanji)
+			.map((form) => `- ${form}`)
 			.join("\n");
 		lines.push(`### Forms\n${s}${forms}${s}`);
 	}

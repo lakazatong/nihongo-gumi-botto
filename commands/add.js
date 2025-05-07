@@ -7,7 +7,12 @@ async function callback(interaction, deck) {
 	const kanji = interaction.options.getString("kanji");
 	const reading = interaction.options.getString("reading");
 	const meanings = interaction.options.getString("meanings");
-	const forms = interaction.options.getString("forms") || null;
+	const forms =
+		interaction.options
+			.getString("forms")
+			?.split(",")
+			.filter((form) => form !== kanji)
+			.join(",") || null;
 	const example = interaction.options.getString("example") || null;
 
 	db.getCardByKanji(interaction, deck, kanji, (card) => {

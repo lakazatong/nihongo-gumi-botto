@@ -34,9 +34,9 @@ async function callback(interaction, deck) {
 	let count = interaction.options.getInteger("count");
 
 	if (Number.isInteger(count)) {
-		if (count === 0) {
+		if (count <= 1) {
 			interaction.reply({
-				content: `**Count** cannot be 0.`,
+				content: `**Count** must be at least 2.`,
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
