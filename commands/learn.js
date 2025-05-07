@@ -8,9 +8,10 @@ const { pickWeightedRandom } = require("../utils/database.js");
 function startSession(deck, card_ids, interval, user, resume) {
 	const userId = user.id;
 	sessions.set(getKey(userId, deck), [
-		null,
 		interval,
+		null,
 		setInterval(() => ask(deck, card_ids, user, false), interval * 60000),
+		null,
 	]);
 
 	if (resume) {
@@ -46,9 +47,10 @@ async function callback(interaction, deck) {
 
 	if (stop) {
 		if (sessions.has(getKey(userId, deck))) {
-			const [pauseTimeoutId, oldInterval, intervalId] = sessions.get(getKey(userId, deck));
+			const [oldInterval, pauseTimeoutId, intervalId, timeoutId] = sessions.get(getKey(userId, deck));
 			if (pauseTimeoutId) clearTimeout(pauseTimeoutId);
 			if (intervalId) clearInterval(intervalId);
+			if (timeoutId) clearTimeout(intervalId);
 			sessions.delete(getKey(userId, deck));
 			interaction.reply({
 				content: `Stopped your${oldInterval === 0 ? " active" : ""} learning session for **${deck}**.`,
@@ -74,12 +76,12 @@ async function callback(interaction, deck) {
 				});
 				return;
 			}
-			const [pauseTimeoutId, oldInterval, intervalId] = sessions.get(getKey(userId, deck));
+			const [oldInterval, pauseTimeoutId, intervalId, _] = sessions.get(getKey(userId, deck));
 			let resumeCallback;
 			let content = `Renewed your pause for **${deck}** to **${pause}** minute${pause > 1 ? "s" : ""}.`;
 			if (oldInterval === 0) {
 				resumeCallback = () => {
-					sessions.set(getKey(userId, deck), [null, oldInterval, null]);
+					sessions.set(getKey(userId, deck), [oldInterval, null, null, null]);
 					user.send({
 						content: `**${deck}** session: resumed the active session.`,
 						flags: MessageFlags.Ephemeral,
@@ -102,7 +104,7 @@ async function callback(interaction, deck) {
 					content = `Paused your session for **${pause}** minute${pause > 1 ? "s" : ""} for **${deck}**.`;
 				}
 			}
-			sessions.set(getKey(userId, deck), [setTimeout(resumeCallback, pause * 60000), oldInterval, null]);
+			sessions.set(getKey(userId, deck), [oldInterval, setTimeout(resumeCallback, pause * 60000), null, null]);
 			interaction.reply({
 				content,
 				flags: MessageFlags.Ephemeral,
@@ -112,13 +114,14 @@ async function callback(interaction, deck) {
 		}
 
 		if (sessions.has(getKey(userId, deck))) {
-			const [pauseTimeoutId, _, intervalId] = sessions.get(getKey(userId, deck));
+			const [_, pauseTimeoutId, intervalId, timeoutId] = sessions.get(getKey(userId, deck));
 			if (pauseTimeoutId) clearTimeout(pauseTimeoutId);
 			if (intervalId) clearInterval(intervalId);
+			if (timeoutId) clearTimeout(timeoutId);
 		}
 
 		if (interval === 0) {
-			sessions.set(getKey(userId, deck), [null, 0, null]);
+			sessions.set(getKey(userId, deck), [0, null, null, null]);
 			ask(deck, card_ids, user, true);
 			interaction.reply({
 				content: `Started an active learning session for **${deck}**.`,

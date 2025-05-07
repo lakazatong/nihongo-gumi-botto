@@ -14,8 +14,9 @@ function getKey(id, deck) {
 
 function ask(deck, card_ids, user, active) {
 	const userId = user.id;
+	const sess = sessions.get(getKey(userId, deck));
 	// if active and stopped or paused, kill the active lesson
-	if (active && (!sessions.has(getKey(userId, deck)) || sessions.get(getKey(userId, deck))[0])) return;
+	if (active && (!sess || sess[1])) return;
 	db.db.all(`SELECT user_id FROM owners WHERE deck = ?`, [deck], (err, rows) => {
 		if (err) {
 			user.send({
@@ -60,6 +61,8 @@ function ask(deck, card_ids, user, active) {
 				});
 				if (active) ask(deck, card_ids, user, true);
 			}, 30000);
+
+			if (sess) sessions.set(getKey(userId, deck), [sess[0], sess[1], sess[2], timeoutId]);
 
 			const buttons = new ActionRowBuilder().addComponents(
 				getCorrectButton().setCustomId(
