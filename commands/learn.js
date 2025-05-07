@@ -76,7 +76,7 @@ async function callback(interaction, deck) {
 				});
 				return;
 			}
-			const [oldInterval, pauseTimeoutId, intervalId, _] = sessions.get(getKey(userId, deck));
+			const [oldInterval, pauseTimeoutId, intervalId, timeoutId] = sessions.get(getKey(userId, deck));
 			let resumeCallback;
 			let content = `Renewed your pause for **${deck}** to **${pause}** minute${pause > 1 ? "s" : ""}.`;
 			if (oldInterval === 0) {
@@ -91,6 +91,7 @@ async function callback(interaction, deck) {
 				if (pauseTimeoutId) {
 					clearTimeout(pauseTimeoutId);
 				} else {
+					clearTimeout(timeoutId);
 					content = `Paused your active session for **${pause}** minute${
 						pause > 1 ? "s" : ""
 					} for **${deck}**.`;
