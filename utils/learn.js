@@ -64,7 +64,9 @@ function ask(deck, card_ids, user) {
 				if (active) ask(deck, card_ids, user);
 			}, 30000);
 
-			if (sess) sessions.set(getKey(userId, deck), [sess[0], sess[1], sess[2], timeoutId]);
+			if (sess) {
+				sessions.set(getKey(userId, deck), [sess[0], sess[1], sess[2], timeoutId, card.id]);
+			}
 
 			const buttons = new ActionRowBuilder().addComponents(
 				getCorrectButton().setCustomId(
@@ -90,16 +92,17 @@ function ask(deck, card_ids, user) {
 				return;
 			}
 
-			help(
-				!cards || cards.length === 0
-					? null
-					: pickWeightedRandom(
-							card_ids.length === 0
-								? cards
-								: cards.filter((card) => card_ids.includes(card.id.toString())),
-							userId
-					  )[0]
-			);
+			let card = null;
+			if (cards?.length > 0) {
+				const filteredCards = cards.filter((card) => card.id.toString() !== sess[4]);
+				card = pickWeightedRandom(
+					card_ids.length === 0
+						? filteredCards
+						: filteredCards.filter((card) => card_ids.includes(card.id.toString())),
+					userId
+				)[0];
+			}
+			help(card);
 		});
 	});
 }
