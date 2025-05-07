@@ -12,11 +12,13 @@ function getKey(id, deck) {
 	return `${id}_${deck}`;
 }
 
-function ask(deck, card_ids, user, active) {
+function ask(deck, card_ids, user) {
 	const userId = user.id;
+	if (!sessions.has(getKey(userId, deck))) return;
 	const sess = sessions.get(getKey(userId, deck));
-	// if active and stopped or paused, kill the active lesson
-	if (active && (!sess || sess[1])) return;
+	const active = sess[0] === 0;
+	// if active and paused, kill the active lesson
+	if (active && sess[1]) return;
 	db.db.all(`SELECT user_id FROM owners WHERE deck = ?`, [deck], (err, rows) => {
 		if (err) {
 			user.send({
@@ -59,7 +61,7 @@ function ask(deck, card_ids, user, active) {
 					content: buildContent(card, false),
 					components: [],
 				});
-				if (active) ask(deck, card_ids, user, true);
+				if (active) ask(deck, card_ids, user);
 			}, 30000);
 
 			if (sess) sessions.set(getKey(userId, deck), [sess[0], sess[1], sess[2], timeoutId]);

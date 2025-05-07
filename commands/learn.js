@@ -10,7 +10,7 @@ function startSession(deck, card_ids, interval, user, resume) {
 	sessions.set(getKey(userId, deck), [
 		interval,
 		null,
-		setInterval(() => ask(deck, card_ids, user, false), interval * 60000),
+		setInterval(() => ask(deck, card_ids, user), interval * 60000),
 		null,
 	]);
 
@@ -23,7 +23,7 @@ function startSession(deck, card_ids, interval, user, resume) {
 		});
 	}
 
-	ask(deck, card_ids, user, false);
+	ask(deck, card_ids, user);
 }
 
 async function callback(interaction, deck) {
@@ -86,7 +86,7 @@ async function callback(interaction, deck) {
 						content: `**${deck}** session: resumed the active session.`,
 						flags: MessageFlags.Ephemeral,
 					});
-					ask(deck, card_ids, user, true);
+					ask(deck, card_ids, user);
 				};
 				if (pauseTimeoutId) {
 					clearTimeout(pauseTimeoutId);
@@ -123,7 +123,7 @@ async function callback(interaction, deck) {
 
 		if (interval === 0) {
 			sessions.set(getKey(userId, deck), [0, null, null, null]);
-			ask(deck, card_ids, user, true);
+			ask(deck, card_ids, user);
 			interaction.reply({
 				content: `Started an active learning session for **${deck}**.`,
 				flags: MessageFlags.Ephemeral,

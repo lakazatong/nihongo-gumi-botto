@@ -26,7 +26,7 @@ async function callback(interaction) {
 					content: buildContent(card, false),
 					components: [button],
 				});
-				if (active === "true") ask(deck, card_ids, interaction.user, true);
+				if (active === "true") ask(deck, card_ids, interaction.user);
 			}
 		);
 	});
